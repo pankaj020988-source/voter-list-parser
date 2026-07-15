@@ -44,12 +44,13 @@ if uploaded_pdf is not None:
             st.write("---")
             st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (अचूक मापांसह):")
             
-            # पानावरील हेडिंग आणि खालचा समास सोडण्यासाठी अचूक गॅप ठरवणे (7% वरून आणि 3% खालून)
-            header_offset = height * 0.07  
-            footer_offset = height * 0.03  
+            # पानावरील हेडिंग सोडण्यासाठी अचूक गॅप (६% वरून आणि १% खालून)
+            header_offset = height * 0.06  
+            footer_offset = height * 0.01  
             
+            # स्लिपची उंची खाली वाढवण्यासाठी usable_height मध्ये बदल करून +८ पिक्सेल वाढवले आहेत
             usable_height = height - header_offset - footer_offset
-            row_height = usable_height / 10
+            row_height = (usable_height / 10) + 8  
             col_width = width / 3
             
             count = 1
@@ -60,11 +61,11 @@ if uploaded_pdf is not None:
                 for c in range(3):
                     # प्रत्येक बॉक्सचे अचूक डावे, उजवे, वरचे आणि खालचे माप
                     left = c * col_width
-                    top = header_offset + (r * row_height)
+                    top = header_offset + (r * (row_height - 8)) # मूळ रो स्पेसिंग मेंटेन करण्यासाठी
                     right = left + col_width
                     bottom = top + row_height
                     
-                    # अचूक मापाने बॉक्स क्रॉप करणे (आता शेजारचे किंवा वरचे नाव मिक्स होणार नाही)
+                    # अचूक मापाने बॉक्स क्रॉप करणे (आता वय, लिंग आणि घर क्रमांक कट होणार नाही)
                     base_slip = main_image.crop((left + 5, top + 2, right - 5, bottom - 2))
                     
                     # --- ब्रँडिंग स्पेस जोडणे ---
