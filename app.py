@@ -63,18 +63,18 @@ if uploaded_pdf is not None:
                     right = left + col_width
                     bottom = top + row_height
                     
-                    # 💡 कॉलम वाईज फाईन ट्यूनिंग (कडा आणि अक्षरे न कापण्यासाठी स्वतंत्र मॅपिंग)
-                    if c == 0:    # पहिली स्लिप (कॉलम १)
+                    # 💡 कडा न कापता जुनी काळी रेघ घालवण्यासाठी एकदम परफेक्ट आणि अचूक सेटिंग:
+                    if c == 0:    # पहिली स्लिप (डावीकडून १८ पिक्सेल सोडली, उजवीकडून ६)
                         crop_left = left + 18
                         crop_right = right - 6
-                    elif c == 1:  # दुसरी स्लिप (कॉलम २)
+                    elif c == 1:  # दुसरी स्लिप (डावीकडून ८ सोडली, उजवीकडून १२)
                         crop_left = left + 8
                         crop_right = right - 12
-                    else:         # तिसरी स्लिप (कॉलम ३)
+                    else:         # तिसरी स्लिप (डावीकडून फक्त २ सोडली, उजवीकडून १८)
                         crop_left = left + 2
                         crop_right = right - 18
                         
-                    # मूळ मतदार चौकट अचूकपणे क्रॉप करणे
+                    # मूळ मतदार चौकट अचूकपणे क्रॉप करणे (वरून ६ आणि खालून ६ पिक्सेलची काळी रेघ साफ!)
                     base_slip = main_image.crop((crop_left, top + 6, crop_right, bottom - 6))
                     
                     # --- A5 पेज गुणोत्तरानुसार रचना ---
@@ -121,7 +121,8 @@ if uploaded_pdf is not None:
                     # ग्रिडमध्ये स्लिप दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        st.markdown(f"📊 **मतدار क्र. {count} (Perfect A5)**")
+                        # 💡 बदल: स्लिपच्या वर 'Perfect Full' दाखवल्याने आपल्याला कळेल की नवीन कोड सुरू झाला आहे!
+                        st.markdown(f"📊 **मतदार क्र. {count} (Perfect Full)**")
                         st.image(a5_slip, use_container_width=True)
                         st.info(f"📣 {branding_text}")
                         
