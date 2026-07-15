@@ -49,7 +49,9 @@ if uploaded_pdf is not None:
             footer_offset = height * 0.025  
             
             usable_height = height - header_offset - footer_offset
-            row_height = usable_height / 10  
+            
+            # 💡 बदल: खालच्या स्लिप्स खाली घसरू नयेत म्हणून प्रत्येक रो ची उंची मोजताना ४ पिक्सेल कमी केले आहेत
+            row_height = (usable_height / 10) - 4  
             
             count = 1
             # ३ कॉलम्सचा ग्रिड लेआउट
@@ -57,10 +59,11 @@ if uploaded_pdf is not None:
             
             for r in range(10):
                 for c in range(3):
-                    top = header_offset + (r * row_height)
+                    # प्रत्येक रो नुसार टॉप अचूक मोजणे
+                    top = header_offset + (r * (row_height + 4))
                     bottom = top + row_height
                     
-                    # 💡 बदल: दुसऱ्या कॉलमला उजवीकडून २% मागे सरकवले (0.660 वरून 0.654 केले) जेणेकरून ३ऱ्या स्लिपचा कचरा २ऱ्यात येणार नाही!
+                    # कॉलम वाईज फाईन ट्यूनिंग (कडा आणि अक्षरे न कापण्यासाठी)
                     if c == 0:    # पहिली स्लिप (कॉलम १)
                         crop_left = width * 0.018
                         crop_right = width * 0.336
@@ -71,8 +74,8 @@ if uploaded_pdf is not None:
                         crop_left = width * 0.656
                         crop_right = width * 0.980
                         
-                    # मूळ मतदार चौकट अचूकपणे क्रॉप करणे
-                    base_slip = main_image.crop((crop_left, top + 6, crop_right, bottom - 6))
+                    # 💡 बदल: शेजारील मतदार कार्डाची वरची आणि खालची बारीक रेष पूर्णपणे वजा करण्यासाठी crop चे माप वरून (+१४) आणि खालून (-१०) केले आहे.
+                    base_slip = main_image.crop((crop_left, top + 14, crop_right, bottom - 10))
                     
                     # --- A5 पेज गुणोत्तरानुसार रचना ---
                     target_width = 800
@@ -118,7 +121,7 @@ if uploaded_pdf is not None:
                     # ग्रिडमध्ये स्लिप दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        st.markdown(f"📊 **मतदार क्र. {count} (Perfect Margin)**")
+                        st.markdown(f"📊 **मतदार क्र. {count} (Perfect Shift Lock)**")
                         st.image(a5_slip, use_container_width=True)
                         st.info(f"📣 {branding_text}")
                         
