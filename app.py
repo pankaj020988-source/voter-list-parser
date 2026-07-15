@@ -1,6 +1,6 @@
 import streamlit as st
 import fitz  # PyMuPDF
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 import io
 
 st.set_page_config(page_title="Balaji Cyber Point - A5 Voter System", layout="wide")
@@ -33,7 +33,7 @@ if uploaded_pdf is not None:
         if st.button("🚀 या पानावरील सर्व ३० स्लिप्स A5 साईझमध्ये क्रॉप करा"):
             page = doc[page_num - 1]
             
-            # A5 वर प्रिंट करायचे असल्याने रिझोल्यूशन ३ पट वाढवू जेणेकरून फोटो फाटणार नाही
+            # हाय-क्वालिटी क्रॉपसाठी रिझोल्यूशन ३ पट वाढवणे
             zoom = 3  
             mat = fitz.Matrix(zoom, zoom)
             pix = page.get_pixmap(matrix=mat)
@@ -42,7 +42,7 @@ if uploaded_pdf is not None:
             width, height = main_image.size
             
             st.write("---")
-            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (A5 लेआउट):")
+            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (Cut-to-Cut):")
             
             # पानावरील हेडिंग आणि तळ अचूकपणे वजा करणे
             header_offset = height * 0.088  
@@ -63,11 +63,11 @@ if uploaded_pdf is not None:
                     right = left + col_width
                     bottom = top + row_height
                     
-                    # मूळ मतदार चौकट अचूकपणे क्रॉप करणे
-                    base_slip = main_image.crop((left + 8, top + 2, right - 8, bottom - 2))
+                    # 💡 बदल: मूळ पीडीएफची काळी बॉर्डर काढण्यासाठी डावीकडून (+२० पिक्सेल) आणि उजवीकडून (-२० पिक्सेल) जास्त कट केले आहे.
+                    # तसेच वरून आणि खालूनही किंचित आत सरकवले आहे जेणेकरून फक्त आतील पांढरा भाग येईल.
+                    base_slip = main_image.crop((left + 22, top + 5, right - 22, bottom - 5))
                     
-                    # --- A5 पेज गुणोत्तरानुसार रचना (A5 Portrait Layout) ---
-                    # स्लिपची रुंदी वाढवणे जेणेकरून A5 वर फिट बसेल
+                    # --- A5 पेज गुणोत्तरानुसार रचना ---
                     target_width = 800
                     
                     # मूळ क्रॉप केलेल्या माहितीचा आकार वाढवणे
@@ -84,43 +84,37 @@ if uploaded_pdf is not None:
                     # नवीन A5 आकाराचे पांढरे कार्ड बनवणे
                     a5_slip = Image.new("RGB", (target_width, a5_h), "#ffffff")
                     
-                    # १. जर लोगो/बॅनर अपलोड केला असेल तर तो वरच्या भागात मोठा फिट करणे
+                    # १. लोगो/बॅनर वरती पेस्ट करणे
                     if uploaded_logo:
                         logo_img = Image.open(uploaded_logo)
-                        # लोगोची रुंदी पूर्ण स्लिपएवढी मोठी करणे
                         logo_w_percent = (target_width - 40) / logo_img.width
                         logo_h = int(logo_img.height * logo_w_percent)
-                        # जर लोगोची उंची जास्त असेल तर ती मर्यादित ठेवणे
                         if logo_h > 180:
                             logo_h = 180
                         resized_logo = logo_img.resize((target_width - 40, logo_h), Image.Resampling.LANCZOS)
                         a5_slip.paste(resized_logo, (20, 20))
                     
-                    # २. क्रॉप केलेला मतदार माहितीचा बॉक्स मध्यभागी पेस्ट करणे
+                    # २. आतील पांढरा मतदार माहितीचा बॉक्स मध्यभागी पेस्ट करणे
                     a5_slip.paste(resized_base, (20, logo_space + 20))
                     
-                    # ३. बॉर्डर्स आणि डिझाईन आखणे
+                    # ३. नवीन सुंदर काळी चौकट आखणे (जुनी घाणेरडी रेष गायब!)
                     draw = ImageDraw.Draw(a5_slip)
-                    # बाहेरची जाड काळी बॉर्डर (A5 प्रोफेशनल लूक)
                     draw.rectangle([(4, 4), (target_width - 4, a5_h - 4)], outline="#000000", width=5)
                     
-                    # मतदार बॉक्सच्या वर आणि खाली रेषा ओढणे
+                    # मतदार बॉक्सच्या वर आणि खाली स्पष्ट रेषा
                     draw.line([(20, logo_space + 10), (target_width - 20, logo_space + 10)], fill="#000000", width=3)
                     draw.line([(20, logo_space + 30 + resized_base.height), (target_width - 20, logo_space + 30 + resized_base.height)], fill="#000000", width=3)
                     
-                    # जाहिरातीसाठी तळाशी ग्रे बॅकग्राउंड पट्टी
+                    # जाहिरातीसाठी तळाशी पट्टी
                     draw.rectangle([(10, a5_h - footer_space - 10), (target_width - 10, a5_h - 10)], fill="#f8f9fa")
                     
                     # ग्रिडमध्ये स्लिप दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        st.markdown(f"📊 **मतदार क्र. {count} (A5 Format)**")
+                        st.markdown(f"📊 **मतदार क्र. {count} (Clean A5)**")
                         st.image(a5_slip, use_container_width=True)
+                        st.info(f"📣 {branding_text}")
                         
-                        # स्क्रीनवर जाहिरात मजकूर ठळकपणे दाखवणे
-                        st.warning(f"📣 {branding_text}")
-                        
-                        # इमेज डाऊनलोड करण्यासाठी मेमरी तयार करणे
                         buf = io.BytesIO()
                         a5_slip.save(buf, format="PNG")
                         byte_im = buf.getvalue()
@@ -128,7 +122,7 @@ if uploaded_pdf is not None:
                         st.download_button(
                             label=f"🖨️ A5 स्लिप {count} प्रिंट",
                             data=byte_im,
-                            file_name=f"A5_Voter_Slip_No{count}.png",
+                            file_name=f"A5_Clean_Slip_{count}.png",
                             mime="image/png",
                             key=f"btn_a5_{page_num}_{r}_{c}"
                         )
@@ -138,4 +132,4 @@ if uploaded_pdf is not None:
     except Exception as e:
         st.error(f"❌ त्रुटी आली: {e}")
 else:
-    st.info("👋 **बालाजी सायबर पॉईंट:** सुरू करण्यासाठी डाव्या बाजूला प्रभाग पीडीएफ अपलोड करा आणि उमेदवाराचा मोठा लोगो जोडा.")
+    st.info("👋 **बालाजी सायबर पॉईंट:** सुरू करण्यासाठी डाव्या बाजूला प्रभाग पीडीएफ अपलोड करा.")
