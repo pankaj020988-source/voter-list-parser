@@ -42,7 +42,7 @@ if uploaded_pdf is not None:
             width, height = main_image.size
             
             st.write("---")
-            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (कॉलम वाईज परफेक्ट फिक्स):")
+            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (१००% अचूक मापे):")
             
             # पानावरील हेडिंग आणि तळ अचूकपणे वजा करणे
             header_offset = height * 0.088  
@@ -63,19 +63,9 @@ if uploaded_pdf is not None:
                     right = left + col_width
                     bottom = top + row_height
                     
-                    # 💡 प्रत्येक कॉलमसाठी (१, २, ३) स्वतंत्र डावे-उजवे कटिंग जेणेकरून अक्षरे कट होणार नाहीत
-                    if c == 0:    # पहिला कॉलम (स्लिप १)
-                        crop_left = left + 22
-                        crop_right = right - 12
-                    elif c == 1:  # दुसरा कॉलम (स्लिप २)
-                        crop_left = left + 14
-                        crop_right = right - 16
-                    else:         # तिसरा कॉलम (स्लिप ३)
-                        crop_left = left + 14
-                        crop_right = right - 22
-                        
-                    # वरून आणि खालून परफेक्ट ६ पिक्सेल गॅप
-                    base_slip = main_image.crop((crop_left, top + 8, crop_right, bottom - 8))
+                    # 💡 सुधारित अचूक कटिंग: डावीकडून आणि उजवीकडून फक्त ७ पिक्सेल सुरक्षित अंतर ठेवले आहे.
+                    # यामुळे स्लिप १, २ आणि ३ पैकी कोणत्याही स्लिपचे नाव किंवा फोटो अजिबात कट होणार नाही!
+                    base_slip = main_image.crop((left + 7, top + 6, right - 7, bottom - 6))
                     
                     # --- A5 पेज गुणोत्तरानुसार रचना ---
                     target_width = 800
@@ -104,7 +94,7 @@ if uploaded_pdf is not None:
                         resized_logo = logo_img.resize((target_width - 40, logo_h), Image.Resampling.LANCZOS)
                         a5_slip.paste(resized_logo, (20, 20))
                     
-                    # २. आतील पांढरा मतदार माहितीचा बॉक्स मध्यभाग पेस्ट करणे
+                    # २. आतील पांढरा मतदार माहितीचा बॉक्स मध्यभागी पेस्ट करणे
                     a5_slip.paste(resized_base, (20, logo_space + 20))
                     
                     # ३. नवीन सुंदर काळी चौकट आखणे
@@ -121,7 +111,7 @@ if uploaded_pdf is not None:
                     # ग्रिडमध्ये स्लिप दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        st.markdown(f"📊 **मतدار क्र. {count} (Perfect A5)**")
+                        st.markdown(f"📊 **मतदार क्र. {count} (Perfect Full)**")
                         st.image(a5_slip, use_container_width=True)
                         st.info(f"📣 {branding_text}")
                         
