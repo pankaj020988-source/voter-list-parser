@@ -44,13 +44,12 @@ if uploaded_pdf is not None:
             st.write("---")
             st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स:")
             
-            # --- सुधारित अचूक गुणोत्तर आणि मापे ---
             # पानावरील हेडिंग (Header) आणि तळ (Footer) अचूकपणे वजा करणे
-            header_offset = height * 0.088  # पहिल्या ओळीच्या वरचे हेडिंग पूर्णपणे सोडण्यासाठी (८.८%)
-            footer_offset = height * 0.025  # खालचा प्रभाग मजकूर सोडण्यासाठी
+            header_offset = height * 0.088  
+            footer_offset = height * 0.025  
             
             usable_height = height - header_offset - footer_offset
-            row_height = usable_height / 10  # प्रत्येक बॉक्सची परफेक्ट उंची
+            row_height = usable_height / 10  
             col_width = width / 3
             
             count = 1
@@ -59,7 +58,6 @@ if uploaded_pdf is not None:
             
             for r in range(10):
                 for c in range(3):
-                    # प्रत्येक बॉक्सचे अचूक डावे, उजवे, वरचे आणि खालचे माप
                     left = c * col_width
                     top = header_offset + (r * row_height)
                     right = left + col_width
@@ -70,23 +68,18 @@ if uploaded_pdf is not None:
                     
                     # --- सुंदर स्लिप कार्ड डिझाईन (ब्रँडिंग स्पेस) ---
                     logo_space = 75 if uploaded_logo else 0
-                    footer_space = 35
                     
                     new_w = base_slip.width + 16
-                    new_h = base_slip.height + logo_space + footer_space + 15
+                    new_h = base_slip.height + logo_space + 20
                     
                     # नवीन पांढरी स्लिप बॅकग्राउंड तयार करणे
                     branded_slip = Image.new("RGB", (new_w, new_h), "#ffffff")
-                    # मूळ क्रॉप केलेला मतदार बॉक्स मध्यभागी पेस्ट करणे
                     branded_slip.paste(base_slip, (8, logo_space + 8))
                     
                     draw = ImageDraw.Draw(branded_slip)
                     
                     # कार्डची बाहेरील आकर्षक काळी बॉर्डर
                     draw.rectangle([(2, 2), (new_w - 2, new_h - 2)], outline="#000000", width=3)
-                    
-                    # तळाशी जाहिरातीसाठी सुंदर पट्टी
-                    draw.rectangle([(4, new_h - footer_space - 4), (new_w - 4, new_h - 4)], fill="#f1f3f6")
                     
                     # लोगो असल्यास डाव्या कोपऱ्यात वर पेस्ट करणे
                     if uploaded_logo:
@@ -96,7 +89,12 @@ if uploaded_pdf is not None:
                     # ग्रिडमध्ये स्लिप दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        st.image(branded_slip, caption=f"मतदार स्लिप क्र. {count}", use_container_width=True)
+                        # स्लिपच्या वर नाव किंवा आयडीनुसार ब्रँडिंग हेडिंग दाखवणे
+                        st.markdown(f"**📍 मतदार स्लिप क्र. {count}**")
+                        st.image(branded_slip, use_container_width=True)
+                        
+                        # स्क्रीनवर जाहिरात मजकूर ठळकपणे दाखवणे
+                        st.info(f"📣 {branding_text}")
                         
                         # इमेज डाऊनलोड करण्यासाठी मेमरी तयार करणे
                         buf = io.BytesIO()
@@ -104,7 +102,7 @@ if uploaded_pdf is not None:
                         byte_im = buf.getvalue()
                         
                         st.download_button(
-                            label=f"🖨️ स्लिप {count} प्रिंट",
+                            label=f"🖨️ स्लिप {count} प्रिंट / डाऊनलोड",
                             data=byte_im,
                             file_name=f"Voter_Slip_Page{page_num}_No{count}.png",
                             mime="image/png",
