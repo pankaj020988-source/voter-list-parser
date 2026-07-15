@@ -42,7 +42,7 @@ if uploaded_pdf is not None:
             width, height = main_image.size
             
             st.write("---")
-            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (१००% अचूक मापे):")
+            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (कॉलम-वाईज परफेक्ट फिक्स):")
             
             # पानावरील हेडिंग आणि तळ अचूकपणे वजा करणे
             header_offset = height * 0.088  
@@ -63,9 +63,19 @@ if uploaded_pdf is not None:
                     right = left + col_width
                     bottom = top + row_height
                     
-                    # 💡 सुधारित अचूक कटिंग: डावीकडून आणि उजवीकडून फक्त ७ पिक्सेल सुरक्षित अंतर ठेवले आहे.
-                    # यामुळे स्लिप १, २ आणि ३ पैकी कोणत्याही स्लिपचे नाव किंवा फोटो अजिबात कट होणार नाही!
-                    base_slip = main_image.crop((left + 7, top + 6, right - 7, bottom - 6))
+                    # 💡 कॉलम वाईज फाईन ट्यूनिंग (कडा आणि अक्षरे न कापण्यासाठी स्वतंत्र मॅपिंग)
+                    if c == 0:    # पहिली स्लिप (कॉलम १)
+                        crop_left = left + 18
+                        crop_right = right - 6
+                    elif c == 1:  # दुसरी स्लिप (कॉलम २)
+                        crop_left = left + 8
+                        crop_right = right - 12
+                    else:         # तिसरी स्लिप (कॉलम ३)
+                        crop_left = left + 2
+                        crop_right = right - 18
+                        
+                    # मूळ मतदार चौकट अचूकपणे क्रॉप करणे
+                    base_slip = main_image.crop((crop_left, top + 6, crop_right, bottom - 6))
                     
                     # --- A5 पेज गुणोत्तरानुसार रचना ---
                     target_width = 800
@@ -111,7 +121,7 @@ if uploaded_pdf is not None:
                     # ग्रिडमध्ये स्लिप दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        st.markdown(f"📊 **मतदार क्र. {count} (Perfect Full)**")
+                        st.markdown(f"📊 **मतدار क्र. {count} (Perfect A5)**")
                         st.image(a5_slip, use_container_width=True)
                         st.info(f"📣 {branding_text}")
                         
