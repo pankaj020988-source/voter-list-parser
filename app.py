@@ -1,106 +1,89 @@
 import streamlit as st
-import pandas as pd
-import re
+import fitz  # PyMuPDF लायब्ररी (पीडीएफ मधून इमेजेस क्रॉप करण्यासाठी)
+from PIL import Image
+import io
 
-st.set_page_config(page_title="डिजिटल मतदार यादी कन्व्हर्टर", layout="wide")
+st.set_page_config(page_title="सायबर पॉईंट मतदार क्रॉप प्रणाली", layout="wide")
 
-st.title("📊 डिजिटल मतदार यादी कन्व्हर्टर व शोध प्रणाली")
-st.markdown("### 🗳️ Balaji Cyber Point - Mangaon स्पेशल")
+st.title("🗳️ डिजिटल मतदार यादी बॉक्स क्रॉपर (No Font Error)")
+st.markdown("### 📊 Balaji Cyber Point - स्पेशल टूल")
 st.write("---")
 
-# दोन वेगळे टॅब बनवू - १. पीडीएफ मधून एक्सेल बनवणे, २. नाव शोधणे
-tab1, tab2 = st.tabs(["⚙️ १. पीडीएफ मजकूर टू एक्सेल कन्व्हर्टर", "🔍 २. मतदार यादी शोध प्रणाली"])
+# डाव्या बाजूला फाईल अपलोडर
+st.sidebar.header("📁 मतदार पीडीएफ लोड करा")
+uploaded_pdf = st.sidebar.file_uploader("डिपार्टमेंटची मूळ पीडीएफ फाईल निवडा", type=["pdf"])
 
-with tab1:
-    st.header("📝 गुगल डॉक्सचा मजकूर इथे पेस्ट करा")
-    st.info("💡 डिपार्टमेंटच्या पीडीएफ मधील मजकूर गुगल ड्राईव्ह/डॉक्स द्वारे शुद्ध मराठीत करून तो खालील बॉक्समध्ये पेस्ट करा.")
-    
-    # मोठा टेक्स्ट बॉक्स मजकूर पेस्ट करण्यासाठी
-    raw_text = st.text_area("मजकूर (Text) इथे पेस्ट करा:", height=300)
-    
-    if st.button("🚀 एक्सेल यादी तयार करा"):
-        if raw_text:
-            # मतदार आयडीनुसार (AZS / BYY) तुकडे पाडणे
-            voter_blocks = re.split(r'([A-Z]{3}\s*\d{7})', raw_text)
-            final_voters = []
-            
-            idx = 1
-            while idx < len(voter_blocks):
-                epic_id = re.sub(r'\s+', '', voter_blocks[idx])
-                block_content = voter_blocks[idx+1] if idx+1 < len(voter_blocks) else ""
-                
-                if block_content:
-                    block_content = re.sub(r'\s+', ' ', block_content).strip()
-                    
-                    # वय आणि लिंग शोधणे
-                    age = 18
-                    age_match = re.search(r'वय\s*[:\-]?\s*(\d+)', block_content)
-                    if age_match:
-                        age = int(age_match.group(1))
-                    
-                    gender = "पुरुष"
-                    if any(x in block_content for x in ['स्त्री', 'महिला', 'जी', 'त्री']):
-                        gender = "female" # किंवा 'महिला'
-                        
-                    # नाव शोधणे
-                    full_name = ""
-                    name_match = re.search(r'(?:मतदाराचे नाव|नाव|नांव|पूर्ण नाव)\s*[:\-]?\s*([^A-Za-z0-9\:]+)', block_content)
-                    
-                    if name_match:
-                        name_part = name_match.group(1).strip()
-                        name_part = re.split(r'(?:वडिलांचे|पतीचे|आईचे|वय|लिंग|घर क्रमांक)', name_part)[0].strip()
-                        full_name = re.sub(r'[^\u0900-\u097F\s]+', '', name_part).strip()
-                    
-                    if not full_name or len(full_name) < 3:
-                        words = [w for w in block_content.split() if re.match(r'^[\u0900-\u097F]+$', w)]
-                        if len(words) >= 2:
-                            full_name = " ".join(words[:3])
-                    
-                    if full_name and not any(k in full_name for k in ['DELETED', 'वगळलेले']):
-                        final_voters.append({
-                            "मतदार आयडी": epic_id,
-                            "नाव": full_name,
-                            "वय": age,
-                            "लिंग": "महिला" if gender == "female" else "पुरुष"
-                        })
-                idx += 2
-            
-            if final_voters:
-                df_output = pd.DataFrame(final_voters).drop_duplicates(subset=['मतदार आयडी'])
-                st.success(f"🎉 विजय झाला पंकज भाऊ! एकूण {len(df_output)} मतदार यशस्वीरित्या फिल्टर केले!")
-                
-                # स्क्रीनवर डेटा दाखवणे
-                st.dataframe(df_output, use_container_width=True)
-                
-                # थेट एक्सेल/CSV डाउनलोड बटण
-                csv = df_output.to_csv(index=False, encoding='utf-8-sig')
-                st.download_button(
-                    label="📥 शुद्ध मराठी एक्सेल (CSV) फाईल डाउनलोड करा",
-                    data=csv,
-                    file_name="शुद्ध_मतदार_यादी.csv",
-                    mime="text/csv"
-                )
-            else:
-                st.error("❌ मजकुरातून डेटा ओळखता आला नाही. फॉरमॅट तपासा.")
-        else:
-            st.warning("⚠️ आधी वरील बॉक्समध्ये मजकूर पेस्ट करा.")
-
-with tab2:
-    st.header("🔍 मतदार शोध प्रणाली")
-    uploaded_file = st.file_uploader("तुमची तयार झालेली एक्सेल/CSV फाईल इथे अपलोड करा", type=["csv", "xlsx"])
-    
-    if uploaded_file is not None:
-        if uploaded_file.name.endswith('.csv'):
-            df = pd.read_csv(uploaded_file, encoding='utf-8-sig')
-        else:
-            df = pd.read_excel(uploaded_file)
-            
-        st.success(f"✅ डेटाबेस लोड झाला! एकूण मतदार: {len(df)}")
+if uploaded_pdf is not None:
+    try:
+        # पीडीएफ फाईल वाचणे
+        pdf_bytes = uploaded_pdf.read()
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        total_pages = len(doc)
         
-        search_query = st.text_input("📝 मतदाराचे नाव किंवा आयडी टाईप करा:")
-        if search_query:
-            filtered_df = df[df.astype(str).apply(lambda row: row.str.contains(search_query, case=False, na=False)).any(axis=1)]
-            if not filtered_df.empty:
-                st.dataframe(filtered_df, use_container_width=True)
-            else:
-                st.warning("❌ मतदार सापडला नाही.")
+        st.success(f"✅ पीडीएफ लोड झाली! एकूण पाने: {total_pages}")
+        
+        # पान निवडण्यासाठी स्लायडर किंवा इनपुट
+        page_num = st.number_input(f"कोणते पान क्रॉप करायचे आहे? (१ ते {total_pages})", min_value=1, max_value=total_pages, value=1)
+        
+        if st.button("🚀 मतदार स्लिप्स क्रॉप करा (Generate Crop)"):
+            # पायथनचे इलेक्शन यादीतील पानाचे कोऑर्डिनेट्स (Coordinates)
+            # एका पानावर साधारण ३० बॉक्स असतात (३ कॉलम्स आणि १० रोज)
+            page = doc[page_num - 1]
+            
+            # पानावरील अक्षरे किंवा कचरा न पाहता थेट पूर्ण पानाचा मोठा हाय-क्वालिटी फोटो बनवणे
+            zoom = 2  # रिझोल्यूशन वाढवण्यासाठी
+            mat = fitz.Matrix(zoom, zoom)
+            pix = page.get_pixmap(matrix=mat)
+            
+            # पिक्समॅपचे पीआयएल इमेजमध्ये रूपांतर
+            img_data = pix.tobytes("png")
+            main_image = Image.open(io.BytesIO(img_data))
+            width, height = main_image.size
+            
+            st.subheader(f"📸 पान क्र. {page_num} मधील मतदार स्लिप्स:")
+            
+            # अंदाजे ३ कॉलम्स आणि १० रोज नुसार पानावरील बॉक्स कट करण्याचे लॉजिक
+            # (तुमच्या पीडीएफच्या रचनेनुसार हे आकडे आपण नंतर बारीक बदलू शकतो)
+            col_width = width / 3
+            row_height = height / 10
+            
+            count = 1
+            # स्क्रीनवर दाखवण्यासाठी ३ कॉलम्सचा लेआउट
+            grid_cols = st.columns(3)
+            
+            for r in range(10):
+                for c in range(3):
+                    # प्रत्येक मतदाराच्या बॉक्सची चौकट (Bounding Box) ठरवणे
+                    left = c * col_width
+                    top = r * row_height
+                    right = left + col_width
+                    bottom = top + row_height
+                    
+                    # इमेज क्रॉप करणे
+                    cropped_box = main_image.crop((left, top, right, bottom))
+                    
+                    # ग्रिडमध्ये स्लिप दाखवणे आणि डाउनलोड बटण देणे
+                    col_index = c
+                    with grid_cols[col_index]:
+                        st.image(cropped_box, caption=f"मतदार क्र. {count}", use_container_width=True)
+                        
+                        # प्रत्येक स्लिप स्वतंत्र डाउनलोड करण्यासाठी बटण
+                        buf = io.BytesIO()
+                        cropped_box.save(buf, format="PNG")
+                        byte_im = buf.getvalue()
+                        
+                        st.download_button(
+                            label=f"📥 स्लिप {count} प्रिंट",
+                            data=byte_im,
+                            file_name=f"voter_slip_{page_num}_{count}.png",
+                            mime="image/png",
+                            key=f"btn_{r}_{c}"
+                        )
+                        st.write("---")
+                    count += 1
+                    
+    except Exception as e:
+        st.error(f"❌ पीडीएफ क्रॉप करताना त्रुटी आली: {e}")
+        st.info("💡 टीप: या टूलसाठी 'PyMuPDF' (fitz) लायब्ररी आवश्यक आहे. ती तुमच्या requirements.txt मध्ये जोडलेली असावी.")
+else:
+    st.info("👋 सुरू करण्यासाठी डाव्या बाजूला डिपार्टमेंटची मूळ पीडीएफ फाईल अपलोड करा. फॉन्ट खराब असला तरी थेट फोटो कट होऊन मिळतील!")
