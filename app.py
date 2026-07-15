@@ -42,15 +42,15 @@ if uploaded_pdf is not None:
             width, height = main_image.size
             
             st.write("---")
-            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (अचूक मापांसह):")
+            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स:")
             
-            # पानावरील हेडिंग सोडण्यासाठी अचूक गॅप (६% वरून आणि १% खालून)
-            header_offset = height * 0.06  
-            footer_offset = height * 0.01  
+            # --- सुधारित अचूक गुणोत्तर आणि मापे ---
+            # पानावरील हेडिंग (Header) आणि तळ (Footer) अचूकपणे वजा करणे
+            header_offset = height * 0.088  # पहिल्या ओळीच्या वरचे हेडिंग पूर्णपणे सोडण्यासाठी (८.८%)
+            footer_offset = height * 0.025  # खालचा प्रभाग मजकूर सोडण्यासाठी
             
-            # स्लिपची उंची खाली वाढवण्यासाठी usable_height मध्ये बदल करून +८ पिक्सेल वाढवले आहेत
             usable_height = height - header_offset - footer_offset
-            row_height = (usable_height / 10) + 8  
+            row_height = usable_height / 10  # प्रत्येक बॉक्सची परफेक्ट उंची
             col_width = width / 3
             
             count = 1
@@ -61,40 +61,42 @@ if uploaded_pdf is not None:
                 for c in range(3):
                     # प्रत्येक बॉक्सचे अचूक डावे, उजवे, वरचे आणि खालचे माप
                     left = c * col_width
-                    top = header_offset + (r * (row_height - 8)) # मूळ रो स्पेसिंग मेंटेन करण्यासाठी
+                    top = header_offset + (r * row_height)
                     right = left + col_width
                     bottom = top + row_height
                     
-                    # अचूक मापाने बॉक्स क्रॉप करणे (आता वय, लिंग आणि घर क्रमांक कट होणार नाही)
-                    base_slip = main_image.crop((left + 5, top + 2, right - 5, bottom - 2))
+                    # मूळ मतदार चौकट अचूकपणे क्रॉप करणे
+                    base_slip = main_image.crop((left + 8, top + 2, right - 8, bottom - 2))
                     
-                    # --- ब्रँडिंग स्पेस जोडणे ---
-                    border_size = 40
-                    logo_space = 60 if uploaded_logo else 0
+                    # --- सुंदर स्लिप कार्ड डिझाईन (ब्रँडिंग स्पेस) ---
+                    logo_space = 75 if uploaded_logo else 0
+                    footer_space = 35
                     
-                    new_w = base_slip.width + 20
-                    new_h = base_slip.height + border_size + 40 + logo_space
+                    new_w = base_slip.width + 16
+                    new_h = base_slip.height + logo_space + footer_space + 15
                     
                     # नवीन पांढरी स्लिप बॅकग्राउंड तयार करणे
                     branded_slip = Image.new("RGB", (new_w, new_h), "#ffffff")
-                    branded_slip.paste(base_slip, (10, logo_space + 10))
+                    # मूळ क्रॉप केलेला मतदार बॉक्स मध्यभागी पेस्ट करणे
+                    branded_slip.paste(base_slip, (8, logo_space + 8))
                     
                     draw = ImageDraw.Draw(branded_slip)
-                    # काळी बॉर्डर
+                    
+                    # कार्डची बाहेरील आकर्षक काळी बॉर्डर
                     draw.rectangle([(2, 2), (new_w - 2, new_h - 2)], outline="#000000", width=3)
                     
-                    # तळाशी फिक्कट पट्टी (जाहिरातीसाठी)
-                    draw.rectangle([(5, new_h - 35), (new_w - 5, new_h - 5)], fill="#f0f2f6")
+                    # तळाशी जाहिरातीसाठी सुंदर पट्टी
+                    draw.rectangle([(4, new_h - footer_space - 4), (new_w - 4, new_h - 4)], fill="#f1f3f6")
                     
-                    # लोगो असल्यास वर पेस्ट करणे
+                    # लोगो असल्यास डाव्या कोपऱ्यात वर पेस्ट करणे
                     if uploaded_logo:
-                        logo_img = Image.open(uploaded_logo).resize((50, 50))
-                        branded_slip.paste(logo_img, (15, 10))
+                        logo_img = Image.open(uploaded_logo).resize((65, 65))
+                        branded_slip.paste(logo_img, (12, 8))
                     
                     # ग्रिडमध्ये स्लिप दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        st.image(branded_slip, caption=f"स्लिप क्र. {count} (पान {page_num})", use_container_width=True)
+                        st.image(branded_slip, caption=f"मतदार स्लिप क्र. {count}", use_container_width=True)
                         
                         # इमेज डाऊनलोड करण्यासाठी मेमरी तयार करणे
                         buf = io.BytesIO()
