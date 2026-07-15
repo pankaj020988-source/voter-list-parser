@@ -50,7 +50,6 @@ if uploaded_pdf is not None:
             
             usable_height = height - header_offset - footer_offset
             row_height = usable_height / 10  
-            col_width = width / 3
             
             count = 1
             # ३ कॉलम्सचा ग्रिड लेआउट
@@ -58,23 +57,22 @@ if uploaded_pdf is not None:
             
             for r in range(10):
                 for c in range(3):
-                    left = c * col_width
                     top = header_offset + (r * row_height)
-                    right = left + col_width
                     bottom = top + row_height
                     
-                    # 💡 कडा न कापता जुनी काळी रेघ घालवण्यासाठी एकदम परफेक्ट आणि अचूक सेटिंग:
-                    if c == 0:    # पहिली स्लिप (डावीकडून १८ पिक्सेल सोडली, उजवीकडून ६)
-                        crop_left = left + 18
-                        crop_right = right - 6
-                    elif c == 1:  # दुसरी स्लिप (डावीकडून ८ सोडली, उजवीकडून १२)
-                        crop_left = left + 8
-                        crop_right = right - 12
-                    else:         # तिसरी स्लिप (डावीकडून फक्त २ सोडली, उजवीकडून १८)
-                        crop_left = left + 2
-                        crop_right = right - 18
+                    # 💡 नवीन अचूक गणित: पानावरील ३ कॉलम्सचे डावे-उजवे माप मॅन्युअली फिक्स केले आहे
+                    # यामुळे अक्षरे उजव्या किंवा डाव्या बाजूला अजिबात टेकणार किंवा कट होणार नाहीत!
+                    if c == 0:    # पहिला कॉलम
+                        crop_left = width * 0.015
+                        crop_right = width * 0.335
+                    elif c == 1:  # दुसरा कॉलम
+                        crop_left = width * 0.342
+                        crop_right = width * 0.665
+                    else:         # तिसरा कॉलम
+                        crop_left = width * 0.672
+                        crop_right = width * 0.985
                         
-                    # मूळ मतदार चौकट अचूकपणे क्रॉप करणे (वरून ६ आणि खालून ६ पिक्सेलची काळी रेघ साफ!)
+                    # मूळ मतदार चौकट अचूकपणे क्रॉप करणे
                     base_slip = main_image.crop((crop_left, top + 6, crop_right, bottom - 6))
                     
                     # --- A5 पेज गुणोत्तरानुसार रचना ---
@@ -121,7 +119,6 @@ if uploaded_pdf is not None:
                     # ग्रिडमध्ये स्लिप दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        # 💡 बदल: स्लिपच्या वर 'Perfect Full' दाखवल्याने आपल्याला कळेल की नवीन कोड सुरू झाला आहे!
                         st.markdown(f"📊 **मतदार क्र. {count} (Perfect Full)**")
                         st.image(a5_slip, use_container_width=True)
                         st.info(f"📣 {branding_text}")
