@@ -42,7 +42,7 @@ if uploaded_pdf is not None:
             width, height = main_image.size
             
             st.write("---")
-            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (Cut-to-Cut):")
+            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (2nd Pic सारख्या क्लीन):")
             
             # पानावरील हेडिंग आणि तळ अचूकपणे वजा करणे
             header_offset = height * 0.088  
@@ -63,9 +63,9 @@ if uploaded_pdf is not None:
                     right = left + col_width
                     bottom = top + row_height
                     
-                    # 💡 बदल: मूळ पीडीएफची काळी बॉर्डर काढण्यासाठी डावीकडून (+२० पिक्सेल) आणि उजवीकडून (-२० पिक्सेल) जास्त कट केले आहे.
-                    # तसेच वरून आणि खालूनही किंचित आत सरकवले आहे जेणेकरून फक्त आतील पांढरा भाग येईल.
-                    base_slip = main_image.crop((left + 22, top + 5, right - 22, bottom - 5))
+                    # 💡 मास्टर बदल: चारी बाजूंनी काळी रेघ काढून फक्त आतील पांढरा भाग घेण्यासाठी अचूक कट-टू-कट मापे
+                    # डावीकडून (+२४), उजवीकडून (-२४), वरून (+१२) आणि खालून (-१०) पिक्सेल क्रॉप आत सरकवले आहे.
+                    base_slip = main_image.crop((left + 24, top + 12, right - 24, bottom - 10))
                     
                     # --- A5 पेज गुणोत्तरानुसार रचना ---
                     target_width = 800
@@ -111,7 +111,7 @@ if uploaded_pdf is not None:
                     # ग्रिडमध्ये स्लिप दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        st.markdown(f"📊 **मतदार क्र. {count} (Clean A5)**")
+                        st.markdown(f"📊 **मतदार क्र. {count} (Super Clean A5)**")
                         st.image(a5_slip, use_container_width=True)
                         st.info(f"📣 {branding_text}")
                         
@@ -122,7 +122,7 @@ if uploaded_pdf is not None:
                         st.download_button(
                             label=f"🖨️ A5 स्लिप {count} प्रिंट",
                             data=byte_im,
-                            file_name=f"A5_Clean_Slip_{count}.png",
+                            file_name=f"A5_SuperClean_Slip_{count}.png",
                             mime="image/png",
                             key=f"btn_a5_{page_num}_{r}_{c}"
                         )
