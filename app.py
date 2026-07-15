@@ -42,14 +42,19 @@ if uploaded_pdf is not None:
             width, height = main_image.size
             
             st.write("---")
-            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (कॉलम-वाईज परफेक्ट फिक्स):")
+            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (मार्जिन-फिक्स):")
             
-            # पानावरील हेडिंग आणि तळ अचूकपणे वजा करणे
+            # १. पानावरील हेडिंग (Header) आणि तळ (Footer) अचूक वजा करणे
             header_offset = height * 0.088  
             footer_offset = height * 0.025  
-            
             usable_height = height - header_offset - footer_offset
             row_height = usable_height / 10  
+            
+            # २. 💡 डाव्या आणि उजव्या बाजूचे कडेचे समास (Margins) वजा करून कॉलमची रुंदी काढणे
+            left_margin = width * 0.018  # १.८% डावा समास
+            right_margin = width * 0.018 # १.८% उजवा समास
+            usable_width = width - left_margin - right_margin
+            col_width = usable_width / 3
             
             count = 1
             # ३ कॉलम्सचा ग्रिड लेआउट
@@ -60,20 +65,12 @@ if uploaded_pdf is not None:
                     top = header_offset + (r * row_height)
                     bottom = top + row_height
                     
-                    # 💡 नवीन अचूक गणित: पानावरील ३ कॉलम्सचे डावे-उजवे माप मॅन्युअली फिक्स केले आहे
-                    # यामुळे अक्षरे उजव्या किंवा डाव्या बाजूला अजिबात टेकणार किंवा कट होणार नाहीत!
-                    if c == 0:    # पहिला कॉलम
-                        crop_left = width * 0.015
-                        crop_right = width * 0.335
-                    elif c == 1:  # दुसरा कॉलम
-                        crop_left = width * 0.342
-                        crop_right = width * 0.665
-                    else:         # तिसरा कॉलम
-                        crop_left = width * 0.672
-                        crop_right = width * 0.985
-                        
-                    # मूळ मतदार चौकट अचूकपणे क्रॉप करणे
-                    base_slip = main_image.crop((crop_left, top + 6, crop_right, bottom - 6))
+                    # प्रत्येक कॉलमची सुरुवात समासापासून पुढे मोजणे
+                    left = left_margin + (c * col_width)
+                    right = left + col_width
+                    
+                    # कडांची बारीक काळी रेष काढण्यासाठी फक्त ८ पिक्सेल सुरक्षित कट करणे
+                    base_slip = main_image.crop((left + 8, top + 6, right - 8, bottom - 6))
                     
                     # --- A5 पेज गुणोत्तरानुसार रचना ---
                     target_width = 800
@@ -119,7 +116,7 @@ if uploaded_pdf is not None:
                     # ग्रिडमध्ये स्लिप दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        st.markdown(f"📊 **मतदार क्र. {count} (Perfect Full)**")
+                        st.markdown(f"📊 **मतदार क्र. {count} (Perfect Margin)**")
                         st.image(a5_slip, use_container_width=True)
                         st.info(f"📣 {branding_text}")
                         
