@@ -1,87 +1,72 @@
 import streamlit as st
-import pytesseract
-from pdf2image import convert_from_path
-import re
 import pandas as pd
-import os
+import base64
 
-st.set_page_config(page_title="सुपर-फास्ट मतदार यादी स्कॅनर", layout="wide")
-st.title("📊 डिजिटल मतदार यादी कन्व्हर्टर (Ultra Fast Cloud OCR)")
+st.set_page_config(page_title="डिजिटल मतदार यादी कन्व्हर्टर", layout="wide")
 
-uploaded_file = st.file_uploader("प्रभागाची PDF फाईल इथे अपलोड करा", type=["pdf"])
+# मुख्य हेडिंग
+st.title("📊 डिजिटल मतदार यादी कन्व्हर्टर व शोध प्रणाली")
+st.markdown("### 🗳️ Balaji Cyber Point - Mangaon स्पेशल")
+st.write("---")
 
-def clean_name(name):
-    if not name: 
-        return ""
-    cleaned = re.sub(r'[A-Za-z0-9\s§\|•\*■\+\[\]\(\)\-\./_\\\?€>;:ः]+', ' ', name)
-    cleaned = re.sub(r'^(मतदाराचे पूर्ण नाव|मतदाराचे पूर्ण|पुर्ण नाव|नाव|नांव|तदाराचे पूर्ण)[:\s]*', '', cleaned).strip()
-    
-    junk_suffixes = [r'\s+मः$', r'\s+मत्‌$', r'\s+मत्$', r'\s+मत$', r'\s+म$', r'\s+मर्‌$']
-    for suffix in junk_suffixes:
-        cleaned = re.sub(suffix, '', cleaned).strip()
-        
-    font_fixes = {'अंबुलें': 'अंबुर्ले', 'अशवीन': 'अश्वीन', 'अर्विनी': 'अश्विनी', 'झार्लस': 'चार्ल्स'}
-    for wrong, right in font_fixes.items():
-        cleaned = cleaned.replace(wrong, right)
-    return cleaned
+# लेआउटसाठी दोन भाग (Columns) करणे
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    st.header("📁 डेटाबेस लोड करा")
+    uploaded_file = st.file_uploader("प्रभागाची एक्सेल (XLSX) किंवा सीएव्ही (CSV) फाईल इथे अपलोड करा", type=["csv", "xlsx"])
 
 if uploaded_file is not None:
-    if st.button("⚡ स्कॅनिंग सुरू करा (फक्त काही सेकंद)"):
-        with st.spinner("क्लाउड सर्व्हरवर यादी स्कॅन होत आहे... कृपया थांबा..."):
+    try:
+        # फाईल वाचणे
+        if uploaded_file.name.endswith('.csv'):
+            df = pd.read_csv(uploaded_file, encoding='utf-8-sig')
+        else:
+            df = pd.read_excel(uploaded_file)
             
-            with open("temp.pdf", "wb") as f:
-                f.write(uploaded_file.getvalue())
+        st.success(f"✅ डेटाबेस यशस्वीरित्या लोड झाला! एकूण मतदार: {len(df)}")
+        
+        with col2:
+            st.header("🔍 मतदार शोध प्रणाली")
+            search_query = st.text_input("📝 मतदाराचे नाव किंवा मतदार आयडी (EPIC No.) टाईप करा:")
             
-            # वेग आणि अचूकतेसाठी २३० DPI परफेक्ट आहे
-            pages = convert_from_path("temp.pdf", dpi=230)
-            voters_list = []
-            
-            # पेज ३ पासून संपूर्ण पानाचा लेआउट ब्लॉक स्वयंचलितपणे स्कॅन करणे
-            for page_num, page_img in enumerate(pages[2:], start=3):
-                # PSM 3 ऑटोमॅटिक लेआउट पॅटर्न क्लाउडवर सर्वात अचूक काम करतो
-                custom_config = r'--oem 3 --psm 3'
-                text = pytesseract.image_to_string(page_img, lang='mar+script/Devanagari', config=custom_config)
+            if search_query:
+                # सर्व कॉलममध्ये सर्च मारणे
+                filtered_df = df[
+                    df.astype(str).apply(lambda row: row.str.contains(search_query, case=False, na=False)).any(axis=1)
+                ]
                 
-                # मतदार आयडीनुसार (EPIC ID) डेटाचे ब्लॉक्स पाडणे
-                voter_blocks = re.split(r'([A-Z]{3}\s*\d{7})', text)
-                
-                if len(voter_blocks) < 2:
-                    continue
+                if not filtered_df.empty:
+                    st.write(f"🎯 सापडलेले एकूण मतदार: {len(filtered_df)}")
                     
-                i = 1
-                while i < len(voter_blocks):
-                    epic_id = re.sub(r'\s+', '', voter_blocks[i])
-                    block_content = voter_blocks[i+1] if i+1 < len(voter_blocks) else ""
+                    # टेबल स्वरूपात डेटा दाखवणे
+                    st.dataframe(filtered_df, use_container_width=True)
                     
-                    if block_content:
-                        lines = [l.strip() for l in block_content.split('\n') if l.strip()]
-                        full_name = ""
-                        
-                        for idx, line in enumerate(lines):
-                            if 'मतदाराचे' in line or 'पूर्ण' in line or 'नाव' in line:
-                                name_part = line.split(':')[-1].split('नांव')[-1].strip()
-                                full_name = clean_name(name_part)
-                                if len(full_name) < 2 and idx + 1 < len(lines):
-                                    full_name = clean_name(lines[idx+1])
-                                break
-                        
-                        if full_name and len(full_name) > 2 and 'DELETED' not in block_content and 'वगळलेले' not in block_content:
-                            voters_list.append({
-                                "मतदार आयडी": epic_id,
-                                "नाव (मराठी)": full_name,
-                                "भाग / वॉर्ड": "प्रभाग क्र. १३ (उतेखोल)"
-                            })
-                    i += 2
-            
-            if os.path.exists("temp.pdf"):
-                os.remove("temp.pdf")
-                
-            if voters_list:
-                df = pd.DataFrame(voters_list)
-                st.success(f"🎉 यशस्वी! एकूण {len(df)} मतदार अचूक सापडले!")
-                st.dataframe(df, use_container_width=True)
-                
-                csv = df.to_csv(index=False).encode('utf-8')
-                st.download_button("📥 संपूर्ण यादी Excel (CSV) मध्ये डाउनलोड करा", csv, "voter_list.csv", "text/csv")
-            else:
-                st.warning("या PDF मधून मतदार डेटा गोषा करता आला नाही. कृपया गिटहबवरील packages.txt फाईल तपासा की ती सेव्ह झाली आहे का.")
+                    # पहिल्या सापडलेल्या मतदाराची स्लिप तयार करणे (सिंगल स्लिप प्रिंटसाठी)
+                    st.markdown("---")
+                    st.subheader("🖨️ मतदार माहिती पावती (Voter Slip)")
+                    
+                    row = filtered_df.iloc[0]
+                    
+                    # स्लिपचे सुंदर एचटीएमएल डिझाईन
+                    html_slip = f"""
+                    <div style="border: 2px dashed #000; padding: 15px; width: 350px; background-color: #fff; font-family: 'Arial'; color: #000;">
+                        <h4 style="text-align: center; margin: 0; border-bottom: 1px solid #000; padding-bottom: 5px;">🗳️ मतदान माहिती पावती 🗳️</h4>
+                        <p style="margin: 8px 0;"><b>नाव:</b> {row.get('नाव (मराठी)', row.get('नाव', 'N/A'))}</p>
+                        <p style="margin: 8px 0;"><b>मतदार आयडी (EPIC):</b> {row.get('मतदार आयडी', row.get('EPIC ID', 'N/A'))}</p>
+                        <p style="margin: 8px 0;"><b>वय:</b> {row.get('वय', 'N/A')} &nbsp;&nbsp;&nbsp;&nbsp; <b>लिंग:</b> {row.get('लिंग', 'N/A')}</p>
+                        <p style="margin: 8px 0; font-size: 13px; color: #555;"><i>शुभेच्छुक: बालाजी सायबर पॉईंट, माणगाव</i></p>
+                    </div>
+                    <br>
+                    <button onclick="window.print()" style="padding: 8px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">🖨️ स्लिप प्रिंट करा</button>
+                    """
+                    st.components.v1.html(html_slip, height=250)
+                    
+                else:
+                    st.warning("❌ या नावाचा किंवा आयडीचा कोणताही मतदार सापडला नाही.")
+                    
+    except Exception as e:
+        st.error(f"❌ फाईल लोड करताना त्रुटी आली: {e}")
+else:
+    with col2:
+        st.info("👋 सायबर पॉईंट मतदार शोध सिस्टीममध्ये आपले स्वागत आहे! सुरू करण्यासाठी डाव्या बाजूला तुमची एक्सेल फाईल (उदा. 'प्रभाग_१३_मतदार_यादी.csv') अपलोड करा.")
