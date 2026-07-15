@@ -1,72 +1,106 @@
 import streamlit as st
 import pandas as pd
-import base64
+import re
 
 st.set_page_config(page_title="डिजिटल मतदार यादी कन्व्हर्टर", layout="wide")
 
-# मुख्य हेडिंग
 st.title("📊 डिजिटल मतदार यादी कन्व्हर्टर व शोध प्रणाली")
 st.markdown("### 🗳️ Balaji Cyber Point - Mangaon स्पेशल")
 st.write("---")
 
-# लेआउटसाठी दोन भाग (Columns) करणे
-col1, col2 = st.columns([1, 2])
+# दोन वेगळे टॅब बनवू - १. पीडीएफ मधून एक्सेल बनवणे, २. नाव शोधणे
+tab1, tab2 = st.tabs(["⚙️ १. पीडीएफ मजकूर टू एक्सेल कन्व्हर्टर", "🔍 २. मतदार यादी शोध प्रणाली"])
 
-with col1:
-    st.header("📁 डेटाबेस लोड करा")
-    uploaded_file = st.file_uploader("प्रभागाची एक्सेल (XLSX) किंवा सीएव्ही (CSV) फाईल इथे अपलोड करा", type=["csv", "xlsx"])
+with tab1:
+    st.header("📝 गुगल डॉक्सचा मजकूर इथे पेस्ट करा")
+    st.info("💡 डिपार्टमेंटच्या पीडीएफ मधील मजकूर गुगल ड्राईव्ह/डॉक्स द्वारे शुद्ध मराठीत करून तो खालील बॉक्समध्ये पेस्ट करा.")
+    
+    # मोठा टेक्स्ट बॉक्स मजकूर पेस्ट करण्यासाठी
+    raw_text = st.text_area("मजकूर (Text) इथे पेस्ट करा:", height=300)
+    
+    if st.button("🚀 एक्सेल यादी तयार करा"):
+        if raw_text:
+            # मतदार आयडीनुसार (AZS / BYY) तुकडे पाडणे
+            voter_blocks = re.split(r'([A-Z]{3}\s*\d{7})', raw_text)
+            final_voters = []
+            
+            idx = 1
+            while idx < len(voter_blocks):
+                epic_id = re.sub(r'\s+', '', voter_blocks[idx])
+                block_content = voter_blocks[idx+1] if idx+1 < len(voter_blocks) else ""
+                
+                if block_content:
+                    block_content = re.sub(r'\s+', ' ', block_content).strip()
+                    
+                    # वय आणि लिंग शोधणे
+                    age = 18
+                    age_match = re.search(r'वय\s*[:\-]?\s*(\d+)', block_content)
+                    if age_match:
+                        age = int(age_match.group(1))
+                    
+                    gender = "पुरुष"
+                    if any(x in block_content for x in ['स्त्री', 'महिला', 'जी', 'त्री']):
+                        gender = "female" # किंवा 'महिला'
+                        
+                    # नाव शोधणे
+                    full_name = ""
+                    name_match = re.search(r'(?:मतदाराचे नाव|नाव|नांव|पूर्ण नाव)\s*[:\-]?\s*([^A-Za-z0-9\:]+)', block_content)
+                    
+                    if name_match:
+                        name_part = name_match.group(1).strip()
+                        name_part = re.split(r'(?:वडिलांचे|पतीचे|आईचे|वय|लिंग|घर क्रमांक)', name_part)[0].strip()
+                        full_name = re.sub(r'[^\u0900-\u097F\s]+', '', name_part).strip()
+                    
+                    if not full_name or len(full_name) < 3:
+                        words = [w for w in block_content.split() if re.match(r'^[\u0900-\u097F]+$', w)]
+                        if len(words) >= 2:
+                            full_name = " ".join(words[:3])
+                    
+                    if full_name and not any(k in full_name for k in ['DELETED', 'वगळलेले']):
+                        final_voters.append({
+                            "मतदार आयडी": epic_id,
+                            "नाव": full_name,
+                            "वय": age,
+                            "लिंग": "महिला" if gender == "female" else "पुरुष"
+                        })
+                idx += 2
+            
+            if final_voters:
+                df_output = pd.DataFrame(final_voters).drop_duplicates(subset=['मतदार आयडी'])
+                st.success(f"🎉 विजय झाला पंकज भाऊ! एकूण {len(df_output)} मतदार यशस्वीरित्या फिल्टर केले!")
+                
+                # स्क्रीनवर डेटा दाखवणे
+                st.dataframe(df_output, use_container_width=True)
+                
+                # थेट एक्सेल/CSV डाउनलोड बटण
+                csv = df_output.to_csv(index=False, encoding='utf-8-sig')
+                st.download_button(
+                    label="📥 शुद्ध मराठी एक्सेल (CSV) फाईल डाउनलोड करा",
+                    data=csv,
+                    file_name="शुद्ध_मतदार_यादी.csv",
+                    mime="text/csv"
+                )
+            else:
+                st.error("❌ मजकुरातून डेटा ओळखता आला नाही. फॉरमॅट तपासा.")
+        else:
+            st.warning("⚠️ आधी वरील बॉक्समध्ये मजकूर पेस्ट करा.")
 
-if uploaded_file is not None:
-    try:
-        # फाईल वाचणे
+with tab2:
+    st.header("🔍 मतदार शोध प्रणाली")
+    uploaded_file = st.file_uploader("तुमची तयार झालेली एक्सेल/CSV फाईल इथे अपलोड करा", type=["csv", "xlsx"])
+    
+    if uploaded_file is not None:
         if uploaded_file.name.endswith('.csv'):
             df = pd.read_csv(uploaded_file, encoding='utf-8-sig')
         else:
             df = pd.read_excel(uploaded_file)
             
-        st.success(f"✅ डेटाबेस यशस्वीरित्या लोड झाला! एकूण मतदार: {len(df)}")
+        st.success(f"✅ डेटाबेस लोड झाला! एकूण मतदार: {len(df)}")
         
-        with col2:
-            st.header("🔍 मतदार शोध प्रणाली")
-            search_query = st.text_input("📝 मतदाराचे नाव किंवा मतदार आयडी (EPIC No.) टाईप करा:")
-            
-            if search_query:
-                # सर्व कॉलममध्ये सर्च मारणे
-                filtered_df = df[
-                    df.astype(str).apply(lambda row: row.str.contains(search_query, case=False, na=False)).any(axis=1)
-                ]
-                
-                if not filtered_df.empty:
-                    st.write(f"🎯 सापडलेले एकूण मतदार: {len(filtered_df)}")
-                    
-                    # टेबल स्वरूपात डेटा दाखवणे
-                    st.dataframe(filtered_df, use_container_width=True)
-                    
-                    # पहिल्या सापडलेल्या मतदाराची स्लिप तयार करणे (सिंगल स्लिप प्रिंटसाठी)
-                    st.markdown("---")
-                    st.subheader("🖨️ मतदार माहिती पावती (Voter Slip)")
-                    
-                    row = filtered_df.iloc[0]
-                    
-                    # स्लिपचे सुंदर एचटीएमएल डिझाईन
-                    html_slip = f"""
-                    <div style="border: 2px dashed #000; padding: 15px; width: 350px; background-color: #fff; font-family: 'Arial'; color: #000;">
-                        <h4 style="text-align: center; margin: 0; border-bottom: 1px solid #000; padding-bottom: 5px;">🗳️ मतदान माहिती पावती 🗳️</h4>
-                        <p style="margin: 8px 0;"><b>नाव:</b> {row.get('नाव (मराठी)', row.get('नाव', 'N/A'))}</p>
-                        <p style="margin: 8px 0;"><b>मतदार आयडी (EPIC):</b> {row.get('मतदार आयडी', row.get('EPIC ID', 'N/A'))}</p>
-                        <p style="margin: 8px 0;"><b>वय:</b> {row.get('वय', 'N/A')} &nbsp;&nbsp;&nbsp;&nbsp; <b>लिंग:</b> {row.get('लिंग', 'N/A')}</p>
-                        <p style="margin: 8px 0; font-size: 13px; color: #555;"><i>शुभेच्छुक: बालाजी सायबर पॉईंट, माणगाव</i></p>
-                    </div>
-                    <br>
-                    <button onclick="window.print()" style="padding: 8px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">🖨️ स्लिप प्रिंट करा</button>
-                    """
-                    st.components.v1.html(html_slip, height=250)
-                    
-                else:
-                    st.warning("❌ या नावाचा किंवा आयडीचा कोणताही मतदार सापडला नाही.")
-                    
-    except Exception as e:
-        st.error(f"❌ फाईल लोड करताना त्रुटी आली: {e}")
-else:
-    with col2:
-        st.info("👋 सायबर पॉईंट मतदार शोध सिस्टीममध्ये आपले स्वागत आहे! सुरू करण्यासाठी डाव्या बाजूला तुमची एक्सेल फाईल (उदा. 'प्रभाग_१३_मतदार_यादी.csv') अपलोड करा.")
+        search_query = st.text_input("📝 मतदाराचे नाव किंवा आयडी टाईप करा:")
+        if search_query:
+            filtered_df = df[df.astype(str).apply(lambda row: row.str.contains(search_query, case=False, na=False)).any(axis=1)]
+            if not filtered_df.empty:
+                st.dataframe(filtered_df, use_container_width=True)
+            else:
+                st.warning("❌ मतदार सापडला नाही.")
