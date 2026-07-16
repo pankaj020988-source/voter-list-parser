@@ -42,14 +42,14 @@ if uploaded_pdf is not None:
             width, height = main_image.size
             
             st.write("---")
-            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (Perfect Full Layout):")
+            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (Perfect Layout):")
             
-            # पानावरील हेडिंग आणि तळ अचूकपणे वजा करणे
+            # पानावरील हेडिंग आणि तळ वजा करणे
             header_offset = height * 0.088  
             footer_offset = height * 0.025  
             usable_height = height - header_offset - footer_offset
             
-            # 💡 बदल: वोटर नंबरची ओळ पूर्णपणे येण्यासाठी बॉक्सची उंची ८ पिक्सेलने वाढवली आहे
+            # ओळीची उंची अचूक ठेवणे
             row_height = (usable_height / 10) + 8  
             
             count = 1
@@ -57,24 +57,23 @@ if uploaded_pdf is not None:
             grid_cols = st.columns(3)
             
             for r in range(10):
-                # रो ची जागा अचूक मेंटेन ठेवणे
                 top = header_offset + (r * (row_height - 8))
                 bottom = top + row_height
                 
                 for c in range(3):
-                    # कॉलम वाईज परफेक्ट विड्थ फिक्स (डावे आणि उजवे कटिंग)
-                    if c == 0:    # पहिली स्लिप
+                    # कॉलम वाईज परफेक्ट विड्थ फिक्स
+                    if c == 0:
                         crop_left = width * 0.018
                         crop_right = width * 0.336
-                    elif c == 1:  # दुसरी स्लिप
+                    elif c == 1:
                         crop_left = width * 0.336
                         crop_right = width * 0.654
-                    else:         # तिसरी स्लिप
+                    else:
                         crop_left = width * 0.656
                         crop_right = width * 0.980
                         
-                    # 💡 बदल: वरचे नाव आणि खालचा मतदार क्रमांक पूर्ण मिळवण्यासाठी क्रॉपचा उभा घेर (`top - 4` आणि `bottom + 12`) वाढवला आहे
-                    base_slip = main_image.crop((crop_left, top - 4, crop_right, bottom + 12))
+                    # 💡 बदल: खालच्या स्लिपची घुसलेली रेघ कापण्यासाठी bottom चे अंतर +१२ वरून +५ पिक्सेल केले आहे.
+                    base_slip = main_image.crop((crop_left, top - 4, crop_right, bottom + 5))
                     
                     # --- A5 पेज गुणोत्तरानुसार रचना ---
                     target_width = 800
@@ -93,7 +92,7 @@ if uploaded_pdf is not None:
                     # नवीन A5 आकाराचे पांढरे कार्ड बनवणे
                     a5_slip = Image.new("RGB", (target_width, a5_h), "#ffffff")
                     
-                    # १. लोगो/बॅनर वरती पेस्ट करणे
+                    # १. लोगो वरती पेस्ट करणे
                     if uploaded_logo:
                         logo_img = Image.open(uploaded_logo)
                         logo_w_percent = (target_width - 40) / logo_img.width
@@ -103,24 +102,23 @@ if uploaded_pdf is not None:
                         resized_logo = logo_img.resize((target_width - 40, logo_h), Image.Resampling.LANCZOS)
                         a5_slip.paste(resized_logo, (20, 20))
                     
-                    # २. आतील पांढरा मतदार माहितीचा बॉक्स मध्यभागी पेस्ट करणे
+                    # २. मतदार माहिती पेस्ट करणे
                     a5_slip.paste(resized_base, (20, logo_space + 20))
                     
-                    # ३. नवीन सुंदर काळी चौकट आखणे
+                    # ३. बॉर्डर आखणे
                     draw = ImageDraw.Draw(a5_slip)
                     draw.rectangle([(4, 4), (target_width - 4, a5_h - 4)], outline="#000000", width=5)
                     
-                    # मतदार बॉक्सच्या वर आणि खाली स्पष्ट रेषा
                     draw.line([(20, logo_space + 10), (target_width - 20, logo_space + 10)], fill="#000000", width=3)
                     draw.line([(20, logo_space + 30 + resized_base.height), (target_width - 20, logo_space + 30 + resized_base.height)], fill="#000000", width=3)
                     
-                    # जाहिरातीसाठी तळाशी पट्टी
+                    # जाहिरात पट्टी
                     draw.rectangle([(10, a5_h - footer_space - 10), (target_width - 10, a5_h - 10)], fill="#f8f9fa")
                     
-                    # ग्रिडमध्ये स्लिप दाखवणे
+                    # ग्रिडमध्ये दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        st.markdown(f"📊 **मतدار क्र. {count} (Perfect Full)**")
+                        st.markdown(f"📊 **मतدار क्र. {count} (Perfect Fixed)**")
                         st.image(a5_slip, use_container_width=True)
                         st.info(f"📣 {branding_text}")
                         
