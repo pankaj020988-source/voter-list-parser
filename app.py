@@ -42,40 +42,47 @@ if uploaded_pdf is not None:
             width, height = main_image.size
             
             st.write("---")
-            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (कॉलम-वाईज परफेक्ट फिक्स):")
+            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (Ultimate 100% Fix):")
             
-            # पानावरील हेडिंग आणि तळ अचूकपणे वजा करणे
-            header_offset = height * 0.088  
-            footer_offset = height * 0.025  
-            
-            usable_height = height - header_offset - footer_offset
-            
-            # 💡 बदल: खालच्या स्लिप्स खाली घसरू नयेत म्हणून प्रत्येक रो ची उंची मोजताना ४ पिक्सेल कमी केले आहेत
-            row_height = (usable_height / 10) - 4  
+            # 💡 मास्टर फिक्स: १० ओळींचे अचूक टॉप (Top) आणि बॉटम (Bottom) गुणोत्तर टक्केवारीनुसार मॅन्युअली लॉक केले आहे!
+            # यामुळे शेवटच्या २-३ रांगा अजिबात खाली घसरणार नाहीत किंवा डेटा कट होणार नाही.
+            row_positions = [
+                (0.088, 0.176),  # रांग १ (मतदार १-३)
+                (0.176, 0.264),  # रांग २ (मतदार ४-६)
+                (0.264, 0.352),  # रांग ३ (मतदार ७-९)
+                (0.352, 0.440),  # रांग ४ (मतदार १०-१२)
+                (0.440, 0.528),  # रांग ५ (मतदार १३-१५)
+                (0.528, 0.616),  # रांग ६ (मतदार १६-१८)
+                (0.616, 0.704),  # रांग ७ (मतदार १९-२१)
+                (0.704, 0.792),  # रांग ८ (मतदार २२-२४)
+                (0.792, 0.880),  # रांग ९ (मतदार २५-२७)
+                (0.880, 0.968)   # रांग १० (मतदार २८-३०)
+            ]
             
             count = 1
             # ३ कॉलम्सचा ग्रिड लेआउट
             grid_cols = st.columns(3)
             
             for r in range(10):
+                # मॅन्युअली ठरवलेल्या लिस्ट मधून चालू रांगेची वरची आणि खालची सीमा मोजणे
+                top_ratio, bottom_ratio = row_positions[r]
+                top = height * top_ratio
+                bottom = height * bottom_ratio
+                
                 for c in range(3):
-                    # प्रत्येक रो नुसार टॉप अचूक मोजणे
-                    top = header_offset + (r * (row_height + 4))
-                    bottom = top + row_height
-                    
-                    # कॉलम वाईज फाईन ट्यूनिंग (कडा आणि अक्षरे न कापण्यासाठी)
-                    if c == 0:    # पहिली स्लिप (कॉलम १)
+                    # कॉलम वाईज परफेक्ट विड्थ फिक्स (डावे आणि उजवे कटिंग)
+                    if c == 0:    # पहिली स्लिप
                         crop_left = width * 0.018
                         crop_right = width * 0.336
-                    elif c == 1:  # दुसरी स्लिप (कॉलम २)
+                    elif c == 1:  # दुसरी स्लिप
                         crop_left = width * 0.336
                         crop_right = width * 0.654
-                    else:         # तिसरी स्लिप (कॉलम ३)
+                    else:         # तिसरी स्लिप
                         crop_left = width * 0.656
                         crop_right = width * 0.980
                         
-                    # 💡 बदल: शेजारील मतदार कार्डाची वरची आणि खालची बारीक रेष पूर्णपणे वजा करण्यासाठी crop चे माप वरून (+१४) आणि खालून (-१०) केले आहे.
-                    base_slip = main_image.crop((crop_left, top + 14, crop_right, bottom - 10))
+                    # 💡 कडांची काळी रेष पूर्णपणे वजा करून स्वच्छ पांढरा भाग घेण्यासाठी अचूक पॅडिंग गॅप
+                    base_slip = main_image.crop((crop_left, top + 15, crop_right, bottom - 12))
                     
                     # --- A5 पेज गुणोत्तरानुसार रचना ---
                     target_width = 800
@@ -121,7 +128,7 @@ if uploaded_pdf is not None:
                     # ग्रिडमध्ये स्लिप दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        st.markdown(f"📊 **मतदार क्र. {count} (Perfect Shift Lock)**")
+                        st.markdown(f"📊 **मतدار क्र. {count} (100% Perfect Fixed)**")
                         st.image(a5_slip, use_container_width=True)
                         st.info(f"📣 {branding_text}")
                         
