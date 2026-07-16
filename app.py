@@ -42,20 +42,23 @@ if uploaded_pdf is not None:
             width, height = main_image.size
             
             st.write("---")
-            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (100% Perfect Layout):")
+            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (Perfect Full Layout):")
             
             # पानावरील हेडिंग आणि तळ अचूकपणे वजा करणे
             header_offset = height * 0.088  
             footer_offset = height * 0.025  
             usable_height = height - header_offset - footer_offset
-            row_height = usable_height / 10  
+            
+            # 💡 बदल: वोटर नंबरची ओळ पूर्णपणे येण्यासाठी बॉक्सची उंची ८ पिक्सेलने वाढवली आहे
+            row_height = (usable_height / 10) + 8  
             
             count = 1
             # ३ कॉलम्सचा ग्रिड लेआउट
             grid_cols = st.columns(3)
             
             for r in range(10):
-                top = header_offset + (r * row_height)
+                # रो ची जागा अचूक मेंटेन ठेवणे
+                top = header_offset + (r * (row_height - 8))
                 bottom = top + row_height
                 
                 for c in range(3):
@@ -70,8 +73,8 @@ if uploaded_pdf is not None:
                         crop_left = width * 0.656
                         crop_right = width * 0.980
                         
-                    # 💡 बदल: नाव कट होऊ नये म्हणून वरून फक्त २ पिक्सेल अंतर सोडले, आणि वय कट होऊ नये म्हणून खालून ६ पिक्सेल जास्त जागा दिली!
-                    base_slip = main_image.crop((crop_left, top + 2, crop_right, bottom + 6))
+                    # 💡 बदल: वरचे नाव आणि खालचा मतदार क्रमांक पूर्ण मिळवण्यासाठी क्रॉपचा उभा घेर (`top - 4` आणि `bottom + 12`) वाढवला आहे
+                    base_slip = main_image.crop((crop_left, top - 4, crop_right, bottom + 12))
                     
                     # --- A5 पेज गुणोत्तरानुसार रचना ---
                     target_width = 800
