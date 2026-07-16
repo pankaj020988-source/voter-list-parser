@@ -42,32 +42,21 @@ if uploaded_pdf is not None:
             width, height = main_image.size
             
             st.write("---")
-            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (Ultimate 100% Fix):")
+            st.subheader(f"🎯 पान क्र. {page_num} मधील सर्व मतदार स्लिप्स (100% Perfect Layout):")
             
-            # 💡 मास्टर फिक्स: १० ओळींचे अचूक टॉप (Top) आणि बॉटम (Bottom) गुणोत्तर टक्केवारीनुसार मॅन्युअली लॉक केले आहे!
-            # यामुळे शेवटच्या २-३ रांगा अजिबात खाली घसरणार नाहीत किंवा डेटा कट होणार नाही.
-            row_positions = [
-                (0.088, 0.176),  # रांग १ (मतदार १-३)
-                (0.176, 0.264),  # रांग २ (मतदार ४-६)
-                (0.264, 0.352),  # रांग ३ (मतदार ७-९)
-                (0.352, 0.440),  # रांग ४ (मतदार १०-१२)
-                (0.440, 0.528),  # रांग ५ (मतदार १३-१५)
-                (0.528, 0.616),  # रांग ६ (मतदार १६-१८)
-                (0.616, 0.704),  # रांग ७ (मतदार १९-२१)
-                (0.704, 0.792),  # रांग ८ (मतदार २२-२४)
-                (0.792, 0.880),  # रांग ९ (मतदार २५-२७)
-                (0.880, 0.968)   # रांग १० (मतदार २८-३०)
-            ]
+            # पानावरील हेडिंग आणि तळ अचूकपणे वजा करणे
+            header_offset = height * 0.088  
+            footer_offset = height * 0.025  
+            usable_height = height - header_offset - footer_offset
+            row_height = usable_height / 10  
             
             count = 1
             # ३ कॉलम्सचा ग्रिड लेआउट
             grid_cols = st.columns(3)
             
             for r in range(10):
-                # मॅन्युअली ठरवलेल्या लिस्ट मधून चालू रांगेची वरची आणि खालची सीमा मोजणे
-                top_ratio, bottom_ratio = row_positions[r]
-                top = height * top_ratio
-                bottom = height * bottom_ratio
+                top = header_offset + (r * row_height)
+                bottom = top + row_height
                 
                 for c in range(3):
                     # कॉलम वाईज परफेक्ट विड्थ फिक्स (डावे आणि उजवे कटिंग)
@@ -81,8 +70,8 @@ if uploaded_pdf is not None:
                         crop_left = width * 0.656
                         crop_right = width * 0.980
                         
-                    # 💡 कडांची काळी रेष पूर्णपणे वजा करून स्वच्छ पांढरा भाग घेण्यासाठी अचूक पॅडिंग गॅप
-                    base_slip = main_image.crop((crop_left, top + 15, crop_right, bottom - 12))
+                    # 💡 बदल: नाव कट होऊ नये म्हणून वरून फक्त २ पिक्सेल अंतर सोडले, आणि वय कट होऊ नये म्हणून खालून ६ पिक्सेल जास्त जागा दिली!
+                    base_slip = main_image.crop((crop_left, top + 2, crop_right, bottom + 6))
                     
                     # --- A5 पेज गुणोत्तरानुसार रचना ---
                     target_width = 800
@@ -128,7 +117,7 @@ if uploaded_pdf is not None:
                     # ग्रिडमध्ये स्लिप दाखवणे
                     col_index = c
                     with grid_cols[col_index]:
-                        st.markdown(f"📊 **मतدار क्र. {count} (100% Perfect Fixed)**")
+                        st.markdown(f"📊 **मतدار क्र. {count} (Perfect Full)**")
                         st.image(a5_slip, use_container_width=True)
                         st.info(f"📣 {branding_text}")
                         
