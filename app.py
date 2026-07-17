@@ -8,7 +8,7 @@ import io
 import urllib.request
 import re
 
-st.set_page_config(page_title="A5 Portrait Voter Slip Generator", layout="wide")
+st.set_page_config(page_title="Balaji Cyber Point - Final Voter System", layout="wide")
 
 st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Full Page Layout)")
 
@@ -51,13 +51,12 @@ if uploaded_file is not None:
     # ३. कॅनव्हास आधारित सुरक्षित पीडीएफ जनरेशन लॉजिक (A5 Portrait)
     def generate_a5_portrait_slips_canvas(data_frame, banner_bytes, polling_station):
         buffer = io.BytesIO()
-        # A5 Portrait चे डायमेन्शन्स निश्चित करणे
         width, height = A5
         c = canvas.Canvas(buffer, pagesize=A5)
         
         for index, row in data_frame.iterrows():
-            # बाहेरील आऊटलाईन बॉक्स (पूर्ण A5 वर सुंदर फिटिंग)
-            c.setStrokeColor(colors.black)
+            # बाहेरील आऊटलाईन बॉक्स (A5 वर परफेक्ट फिटिंग)
+            c.setStrokeColorRGB(0, 0, 0) # Black Color
             c.setLineWidth(2)
             c.rect(15, 15, width - 30, height - 30)
             
@@ -74,18 +73,18 @@ if uploaded_file is not None:
                 c.drawCentredString(width / 2, height - 70, "[ इथे तुमचा पॅनेल बॅनर दिसेल ]")
                 
             # कापावे रेष
-            c.setStrokeColor(colors.dimgrey)
+            c.setStrokeColorRGB(0.4, 0.4, 0.4) # Dark Grey
             c.setLineWidth(0.5)
             c.setDash(4, 4)
             c.line(20, height - 130, width - 20, height - 130)
             c.setDash() # रिसेट डॅश
             
             c.setFont(font_name, 11)
-            c.setFillColor(colors.dimgrey)
+            c.setFillColorRGB(0.3, 0.3, 0.3)
             c.drawCentredString(width / 2, height - 125, "----------------- मतदान केंद्रात जाण्यापूर्वी येथून कापावे -----------------")
             
             # डेटा क्लिनिंग आणि मॅपिंग
-            voter_no = row.get('अनुक्रमांक', row.get('मतदार नं.', index + 1))
+            voter_no = row.get('अनुक्रमांक', row.get('मतдар नं.', index + 1))
             raw_name = row.get('मतदाराचे पूर्ण नांव', row.get('नाव', row.get('मतदाराचे पूर्ण नाव', '')))
             
             clean_name = str(raw_name).replace('सचनि', 'सचिन').replace('दलिीप', 'दिलीप').replace('अभजिीत', 'अभिजीत').replace('गोवदि', 'गोविंद').replace('करिण', 'किरण').replace('अश्वनिी', 'अश्विनी').replace('संदपि', 'संदीप').replace('योगतिा', 'योगिता').replace('प्रयिांका', 'प्रियांका').replace('आदत्यि', 'आद्या').replace('मुजाहदि', 'मुजाहिद').replace('मनषिा', 'मनिषा').replace('वलिलास', 'विलास').replace('सारकिा', 'सारिका').replace('सुरेद्र', 'सुरेंद्र').replace('मंजरीि', 'मंजिरी').replace('भाटयिा', 'भाटिया').replace('गंगासगि', 'गंगासिंग').replace('सुरेद्रसगि', 'सुरेंद्रसिंग').replace('मांजशिी', 'मांजिरी').replace('गुरवदिर', 'गुरविंदर').replace('जतिंद्र', 'जितेन्द्र').replace('जतिद्र', 'जितेंद्र').replace('शशकिल', 'शशिकला').replace('शविचरण', 'शिवचरण').replace('माधूरी', 'माधुरी').replace('रनिा', 'रिना').replace('मयििांचद', 'मियाचंद').replace('अमति', 'अमित').replace('सलिराज', 'शिलेराज').replace('वदिद्या', 'विद्या').replace('रामसगि', 'रामसिंग').replace('कसिनसगि', 'किसनसिंग').replace('राजूसगि', 'राजूसिंग').replace('प्रवणि', 'प्रवीण').replace('शदि', 'शिंदे').replace('शर्मलिर्ता', 'शर्मिला').replace('वरािज', 'विराज').replace('शरीिष', 'शिरीष').replace('चरािग', 'चिراق').replace('रूचतिा', 'रुचिता').replace('नरिजन', 'निरंजन').replace('दपिक', 'दीपक')
@@ -97,8 +96,8 @@ if uploaded_file is not None:
             house_no = row.get('घर क्रमांक', '-')
             part_no = row.get('भाग / सिरीयल क्र.', row.get('यादी भाग क्र.', ''))
             
-            # २. मजकूर पूर्ण पानावर मोठा आणि ठळक टाईप करणे (Font Size 18)
-            c.setFillColor(colors.black)
+            # २. मजकूर पूर्ण पानावर मोठा आणि ठळक दाखवणे (Font Size 18)
+            c.setFillColorRGB(0, 0, 0)
             c.setFont(font_name, 18)
             
             start_y = height - 170
