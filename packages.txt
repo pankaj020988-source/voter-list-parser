@@ -1,3 +1,4 @@
-tesseract-ocr
-tesseract-ocr-mar
-poppler-utils
+pandas
+openpyxl
+streamlit
+xhtml2pdf
