@@ -1,124 +1,155 @@
 import streamlit as st
-import fitz  # PyMuPDF
-from PIL import Image, ImageDraw
+import pandas as pd
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 import io
+import urllib.request
 
-st.set_page_config(page_title="Balaji Cyber Point - Final Voter System", layout="wide")
+st.set_page_config(page_title="Voter Slip Generator", layout="wide")
 
-st.title("🗳️ बालजी सायबर पॉईंट - १००% अचूक मतदार स्लिप क्रॉपर")
-st.markdown("#### 📍 माणगाव (Mangaon) - नो-कट फायनल सिस्टीम")
-st.write("---")
+st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A4 - 2 Column Layout)")
 
-st.sidebar.header("📁 १. मतदार पीडीएफ लोड करा")
-uploaded_pdf = st.sidebar.file_uploader("डिपार्टमेंटची मूळ मतदार यादी (PDF)", type=["pdf"])
+# १. पॅनेल बॅनर आणि सेटिंग्ज
+st.sidebar.header("⚙️ पॅनेल कॉन्फिगरेशन")
+uploaded_banner = st.sidebar.file_uploader("१. पॅनेलचा बॅनर इमेज अपलोड करा", type=["jpg", "jpeg", "png"])
+polling_station_input = st.sidebar.text_input("२. मतदान केंद्राचे नाव (सर्व स्लिप्ससाठी समान असल्यास)", "ज. प. प्रा. शाळा")
 
-st.sidebar.header("🎨 २. सायबर पॉईंट ब्रँडिंग")
-branding_text = st.sidebar.text_input("स्लिपवरील जाहिरात मजकूर:", "शुभेच्छुक: बालजी सायबर पॉईंट, माणगाव")
-uploaded_logo = st.sidebar.file_uploader("उमेदवाराचा लोगो / बॅनर (A5 साठी)", type=["png", "jpg", "jpeg"])
+# २. एक्सेल फाईल अपलोड
+st.subheader("📊 मतदार एक्सेल फाईल अपलोड करा")
+uploaded_file = st.file_uploader("तुमची पार्स केलेली एक्सेल फाईल (.xlsx) इथे अपलोड करा", type=["xlsx"])
 
-if uploaded_pdf is not None:
+# मराठी फॉन्ट डाउनलोड आणि रजिस्टर करण्याचे फंक्शन (जेणेकरून पीडीएफ मध्ये मराठी नावे व्यवस्थित दिसतील)
+@st.cache_resource
+def register_marathi_font():
     try:
-        pdf_bytes = uploaded_pdf.read()
-        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-        total_pages = len(doc)
-        
-        st.success(f"✅ पीडीएफ यशस्वीरित्या लोड झाली!")
-        
-        page_num = st.number_input(f"कोणते पान क्रॉप करायचे आहे? (१ ते {total_pages})", min_value=1, max_value=total_pages, value=3)
-        
-        if st.button("⚡ झटपट सर्व ३० स्लिप्स A5 मध्ये तयार करा"):
-            page = doc[page_num - 1]
-            
-            zoom = 3  
-            mat = fitz.Matrix(zoom, zoom)
-            pix = page.get_pixmap(matrix=mat)
-            img_data = pix.tobytes("png")
-            main_image = Image.open(io.BytesIO(img_data))
-            width, height = main_image.size
-            
-            st.write("---")
-            
-            # उभ्या ओळी फिक्स करण्यासाठी अचूक टक्केवारी (Vertical Limits)
-            row_positions = [
-                (0.088, 0.176), (0.176, 0.264), (0.264, 0.352),
-                (0.352, 0.440), (0.440, 0.528), (0.528, 0.616),
-                (0.616, 0.704), (0.704, 0.792), (0.792, 0.880),
-                (0.880, 0.968)
-            ]
-            
-            count = 1
-            grid_cols = st.columns(3)
-            
-            for r in range(10):
-                top_ratio, bottom_ratio = row_positions[r]
-                top = height * top_ratio
-                bottom = height * bottom_ratio
-                
-                for c in range(3):
-                    # 💡 फायनल कस्टमाइज्ड मॅपिंग: २ आणि ३ नंबरच्या स्लिप्स डावीकडून कट होऊ नयेत म्हणून मुद्दाम जास्त पांढरी जागा घेतली आहे!
-                    if c == 0:    # पहिली स्लिप
-                        crop_left = width * 0.010
-                        crop_right = width * 0.336
-                    elif c == 1:  # दुसरी स्लिप (डावीकडून ओढली)
-                        crop_left = width * 0.320
-                        crop_right = width * 0.654
-                    else:         # तिसरी स्लिप (डावीकडून ओढली)
-                        crop_left = width * 0.640
-                        crop_right = width * 0.985
-                        
-                    # वरचे नाव आणि खालचा वोटर नंबर पूर्ण मिळवण्यासाठी परफेक्ट क्रॉप
-                    base_slip = main_image.crop((crop_left, top - 2, crop_right, bottom + 12))
-                    
-                    target_width = 800
-                    scale_percent = target_width / base_slip.width
-                    new_box_h = int(base_slip.height * scale_percent)
-                    resized_base = base_slip.resize((target_width - 40, new_box_h), Image.Resampling.LANCZOS)
-                    
-                    logo_space = 200 if uploaded_logo else 40
-                    footer_space = 100
-                    
-                    a5_h = resized_base.height + logo_space + footer_space + 60
-                    a5_slip = Image.new("RGB", (target_width, a5_h), "#ffffff")
-                    
-                    # गणपती बाप्पा / उमेदवाराचा लोगो पूर्ण मोठा पेस्ट करणे
-                    if uploaded_logo:
-                        logo_img = Image.open(uploaded_logo)
-                        logo_w_percent = (target_width - 40) / logo_img.width
-                        logo_h = int(logo_img.height * logo_w_percent)
-                        if logo_h > 180:
-                            logo_h = 180
-                        resized_logo = logo_img.resize((target_width - 40, logo_h), Image.Resampling.LANCZOS)
-                        a5_slip.paste(resized_logo, (20, 20))
-                    
-                    a5_slip.paste(resized_base, (20, logo_space + 20))
-                    
-                    # काळी बॉर्डर डिझाईन
-                    draw = ImageDraw.Draw(a5_slip)
-                    draw.rectangle([(4, 4), (target_width - 4, a5_h - 4)], outline="#000000", width=5)
-                    draw.line([(20, logo_space + 10), (target_width - 20, logo_space + 10)], fill="#000000", width=3)
-                    draw.line([(20, logo_space + 30 + resized_base.height), (target_width - 20, logo_space + 30 + resized_base.height)], fill="#000000", width=3)
-                    
-                    draw.rectangle([(10, a5_h - footer_space - 10), (target_width - 10, a5_h - 10)], fill="#f8f9fa")
-                    
-                    col_index = c
-                    with grid_cols[col_index]:
-                        st.markdown(f"📊 **मतदार क्र. {count}**")
-                        st.image(a5_slip, use_container_width=True)
-                        
-                        buf = io.BytesIO()
-                        a5_slip.save(buf, format="PNG")
-                        byte_im = buf.getvalue()
-                        
-                        st.download_button(
-                            label=f"🖨️ प्रिंट स्लिप {count}",
-                            data=byte_im,
-                            file_name=f"Voter_Slip_{count}.png",
-                            mime="image/png",
-                            key=f"btn_{page_num}_{r}_{c}"
-                        )
-                    count += 1
-                    
+        font_url = "https://github.com/googlefonts/noto-fonts/raw/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf"
+        font_data = urllib.request.urlopen(font_url).read()
+        font_io = io.BytesIO(font_data)
+        pdfmetrics.registerFont(TTFont('NotoSans', font_io))
+        return 'NotoSans'
     except Exception as e:
-        st.error(f"❌ त्रुटी आली: {e}")
-else:
-    st.info("👋 **बालाजी सायबर पॉईंट:** सुरू करण्यासाठी डाव्या बाजूला प्रभाग पीडीएफ अपलोड करा.")
+        # काही अडचण आल्यास डीफॉल्ट फॉन्ट वापरेल
+        return 'Helvetica'
+
+font_name = register_marathi_font()
+
+if uploaded_file is not None:
+    # एक्सेल डेटा लोड करणे
+    df = pd.read_excel(uploaded_file)
+    st.success("✅ एक्सेल फाईल यशस्वीरित्या लोड झाली!")
+    st.write("### मतदार डेटा प्रीव्ह्यू (पहिले ५ रेकॉर्ड्स)", df.head())
+
+    # PDF जनरेशन लॉजिक
+    def generate_slips_pdf(data_frame, banner_bytes, polling_station):
+        buffer = io.BytesIO()
+        # A4/Letter साईझ आणि गॅप्स मॅनेजमेंट
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
+        story = []
+        
+        styles = getSampleStyleSheet()
+        
+        # मराठी मजकुरासाठी स्टाईल
+        marathi_style = ParagraphStyle(
+            'MarathiStyle',
+            parent=styles['Normal'],
+            fontName=font_name,
+            fontSize=10,
+            leading=14,
+            textColor=colors.black
+        )
+        
+        # कापावे रेषेसाठी स्टाईल
+        cut_style = ParagraphStyle(
+            'CutStyle',
+            parent=styles['Normal'],
+            fontName=font_name,
+            fontSize=8,
+            leading=10,
+            alignment=1, # Center
+            textColor=colors.dimgrey
+        )
+        
+        slips_list = []
+        current_row = []
+        
+        for index, row in data_frame.iterrows():
+            slip_content = []
+            
+            # १. पॅनेल बॅनर ॲड करणे
+            if banner_bytes:
+                banner_img = Image(io.BytesIO(banner_bytes), width=250, height=65)
+                slip_content.append(banner_img)
+            else:
+                slip_content.append(Paragraph("<b><font color='red'>[इथे तुमचा पॅनेल बॅनर दिसेल]</font></b>", marathi_style))
+            
+            slip_content.append(Spacer(1, 3))
+            slip_content.append(Paragraph("----------------- मतदान केंद्रात जाण्यापूर्वी येथून कापावे -----------------", cut_style))
+            slip_content.append(Spacer(1, 5))
+            
+            # २. एक्सेल मधील कॉलमची नावे मॅप करणे
+            voter_no = row.get('अनुक्रमांक', row.get('मतदार नं.', index + 1))
+            voter_name = row.get('मतदाराचे पूर्ण नांव', row.get('नाव', row.get('मतदाराचे पूर्ण नाव', '')))
+            gender = row.get('लिंग', '')
+            age = row.get('वय', '')
+            epic_no = row.get('मतदार ओळखपत्र क्र. (Voter ID)', row.get('मतदार ओळखपत्र क्र.', ''))
+            house_no = row.get('घर क्रमांक', '-')
+            part_no = row.get('भाग / सिरीयल क्र.', row.get('यादी भाग क्र.', ''))
+            
+            # ३. स्लिपचा मजकूर फॉरमॅटिंग (तुमच्या प्रतिमेप्रमाणे)
+            info_html = f"""
+            <b>मतदार नं. :</b> {voter_no} <br/>
+            <b>नाव :</b> {voter_name} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>{gender}/{age}</b><br/>
+            <b>ओळखपत्र क्र. :</b> {epic_no} <br/>
+            <b>घर क्रमांक :</b> {house_no} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>भाग नं:</b> {part_no}<br/>
+            <b>मतदान केंद्र :</b> {polling_station}
+            """
+            
+            slip_content.append(Paragraph(info_html, marathi_style))
+            
+            # २ Column ग्रीड मॅनेजमेंट
+            current_row.append(slip_content)
+            if len(current_row) == 2:
+                slips_list.append(current_row)
+                current_row = []
+                
+        # शिल्लक राहिलेला शेवटचा बॉक्स हाताळणे
+        if current_row:
+            current_row.append([])
+            slips_list.append(current_row)
+            
+        # टेबल लेआउट आणि बॉर्डर्स (कापण्यासाठी आउटलाईन)
+        slip_table = Table(slips_list, colWidths=[275, 275])
+        slip_table.setStyle(TableStyle([
+            ('BOX', (0,0), (-1,-1), 1, colors.grey),
+            ('INNERGRID', (0,0), (-1,-1), 0.5, colors.lightgrey),
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('TOPPADDING', (0,0), (-1,-1), 12),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 12),
+            ('LEFTPADDING', (0,0), (-1,-1), 10),
+            ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ]))
+        
+        story.append(slip_table)
+        doc.build(story)
+        buffer.seek(0)
+        return buffer.getvalue()
+
+    # ३. पीडीएफ जनरेट आणि डाऊनलोड बटन
+    st.markdown("---")
+    if st.button("🚀 सर्व ५९० मतदारांच्या स्लिप्स तयार करा"):
+        banner_data = uploaded_banner.read() if uploaded_banner else None
+        
+        with st.spinner("तुमच्या पॅनेलच्या स्लिप्स पीडीएफ मध्ये तयार होत आहेत..."):
+            pdf_out = generate_slips_pdf(df, banner_data, polling_station_input)
+            
+            st.success("🎉 स्लिप्स तयार झाल्या आहेत! खालील बटनावर क्लिक करून डाऊनलोड करा.")
+            st.download_button(
+                label="📥 मतदार स्लिप्स (PDF) डाऊनलोड करा",
+                data=pdf_out,
+                file_name="Panel_Voter_Slips.pdf",
+                mime="application/pdf"
+            )
