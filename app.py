@@ -3,30 +3,31 @@ import pandas as pd
 import base64
 import re
 
-st.set_page_config(page_title="Balaji Cyber Point - Ultimate Voter System", layout="wide")
+# Professional Corporate Page Setup
+st.set_page_config(page_title="Balaji Cyber Point | Voter Slip System Pro", layout="wide")
 
-st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (अंतिम एकत्रित डाऊनलोड - ऑल इन वन)")
+st.markdown("<h2 style='text-align: center; color: #1E3A8A; font-family: sans-serif; margin-bottom: 25px;'>VOTER SLIP SYSTEM PRO</h2>", unsafe_allow_html=True)
 
-# १. पॅनेल बॅनर आणि सेटिंग्ज
-st.sidebar.header("⚙️ पॅनेल कॉन्फिगरेशन")
-uploaded_banner = st.sidebar.file_uploader("१. पॅनेलचा बॅनर इमेज अपलोड करा", type=["jpg", "jpeg", "png"])
-polling_station_input = st.sidebar.text_input("२. मतदान केंद्राचे नाव", "ज. प. प्रा. शाळा")
+# 1. Professional Control Panel (Sidebar)
+st.sidebar.markdown("<h3 style='color: #1E3A8A; font-family: sans-serif;'>CONFIGURATION</h3>", unsafe_allow_html=True)
+uploaded_banner = st.sidebar.file_uploader("Upload Panel Banner (JPG/PNG)", type=["jpg", "jpeg", "png"])
+polling_station_input = st.sidebar.text_input("Polling Station Name", "ज. प. प्रा. शाळा")
 
-# २. लेआउट चॉईस
-st.sidebar.header("📐 प्रिंट लेआउट सेटिंग्ज")
+st.sidebar.markdown("---")
+st.sidebar.markdown("<h3 style='color: #1E3A8A; font-family: sans-serif;'>PRINT LAYOUT</h3>", unsafe_allow_html=True)
 layout_choice = st.sidebar.radio(
-    "तुम्हाला एका पानावर किती स्लिप्स पाहिजेत?",
+    "Select Sheets Configuration:",
     [
-        "A5 पाडलेले लेआउट (१ पानावर १ स्लिप)", 
-        "A5 पाडलेले लेआउट (१ पानावर २ स्लिप्स)", 
-        "A4 पाडलेले लेआउट (१ पानावर ४ स्लिप्स)", 
-        "A4 पाडलेले लेआउट (१ पानावर ६ स्लिप्स)"
+        "A5 Paper Layout (1 Slip per Page)", 
+        "A5 Paper Layout (2 Slips per Page)", 
+        "A4 Paper Layout (4 Slips per Page)", 
+        "A4 Paper Layout (6 Slips per Page)"
     ]
 )
 
-# ३. एक्सेल फाईल अपलोड
-st.subheader("📊 मतदार एक्सेल फाईल अपलोड करा")
-uploaded_file = st.file_uploader("तुमची एक्सेल फाईल (.xlsx) इथे अपलोड करा", type=["xlsx"])
+# 2. Clean Data Upload Area
+st.markdown("<h4 style='color: #374151; font-family: sans-serif;'>1. Import Voter Database</h4>", unsafe_allow_html=True)
+uploaded_file = st.file_uploader("Choose Excel File (.xlsx)", type=["xlsx"], label_visibility="collapsed")
 
 def clean_gender_and_text(text):
     text = str(text).strip()
@@ -44,25 +45,23 @@ def get_image_base64(uploaded_image):
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
     total_rows = len(df)
-    st.success(f"✅ एक्सेल फाईल यशस्वीरित्या लोड झाली! एकूण मतदार: {total_rows}")
+    st.success(f"Database Synchronized successfully. Total Records Indexed: {total_rows}")
     
-    # ४. डायनॅमिक HTML ग्रिड जनरेशन लॉजिक (बॉक्सच्या बाहेर स्वतंत्र कटिंग लाईन फिक्स)
+    # 3. Dynamic HTML Layout Engine (Retains 100% Pure Marathi Data Internally)
     def generate_advanced_layout(data_frame, banner_b64, polling_station, layout_type):
-        if "१ पानावर १ स्लिप" in layout_type:
+        if "1 Slip" in layout_type:
             grid_css = ".grid-container { display: block; }"
             box_width, box_height, banner_h, font_s = "132mm", "194mm", "115mm", "15px"
             page_padding = "padding: 8mm;"
             items_per_page = 1
             wrapper_style = ""
-        elif "१ पानावर २ स्लिप्स" in layout_type:
-            # A5 वर २ स्लिप्स - दोन बॉक्सच्या मधोमध ६mm ची मोकळी जागा आणि त्यात डॅश लाईन
+        elif "2 Slips" in layout_type:
             grid_css = ".grid-container { display: grid; grid-template-columns: 1fr; gap: 6mm; background-image: linear-gradient(to right, #000 33%, rgba(255,255,255,0) 0%); background-position: center 103mm; background-size: 8px 1.5px; background-repeat: repeat-x; }"
             box_width, box_height, banner_h, font_s = "134mm", "94mm", "48mm", "11px"
             page_padding = "padding: 5mm 7mm;"
             items_per_page = 2
             wrapper_style = ""
-        elif "४ स्लिप्स" in layout_type:
-            # A4 वर ४ स्लिप्स - बॉक्सच्या बाहेर मधोमध प्लस (+) आकारात कडक डॅश कटिंग लाईन
+        elif "4 Slips" in layout_type:
             grid_css = """
                 .grid-container { 
                     display: grid; 
@@ -93,8 +92,7 @@ if uploaded_file is not None:
             page_padding = "padding: 6mm 4mm;"
             items_per_page = 4
             wrapper_style = ""
-        else: # ६ स्लिप्स
-            # A4 वर ६ स्लिप्स - सर्व बॉक्सच्या बाहेर मोकळ्या जागेत परफेक्ट ग्रीड डॅश कटिंग लाईन्स
+        else: 
             grid_css = """
                 .grid-container { 
                     display: grid; 
@@ -158,7 +156,7 @@ if uploaded_file is not None:
             .outer-box {{
                 width: {box_width};
                 height: {box_height};
-                border: 1.5mm solid #000000 !important; /* प्रत्येक बॉक्सला शंभर टक्के अखंड काळी बॉर्डर */
+                border: 1.5mm solid #000000 !important;
                 box-sizing: border-box;
                 padding: 0px;
                 position: relative;
@@ -234,8 +232,7 @@ if uploaded_file is not None:
             
             html_content += '<div class="page-sheet"><div class="grid-container">'
             
-            # ६ स्लिप्स लेआउटसाठी अंतर्गत अतिरिक्त लाईन जोडणे
-            if "६ स्लिप्स" in layout_type:
+            if "6 Slips" in layout_type:
                 html_content += '<div class="grid-container-horizontal-2"></div>'
             
             for _, row in page_voters:
@@ -259,7 +256,7 @@ if uploaded_file is not None:
                 if banner_b64:
                     html_content += f'<img src="data:image/jpeg;base64,{banner_b64}" class="banner-img">'
                 else:
-                    html_content += '<div class="no-banner">[ पॅनेल बॅनर ]</div>'
+                    html_content += '<div class="no-banner">[ PANEL BANNER ]</div>'
                     
                 html_content += f"""
                     </div>
@@ -291,14 +288,18 @@ if uploaded_file is not None:
     banner_base64 = get_image_base64(uploaded_banner)
     final_html = generate_advanced_layout(df, banner_base64, polling_station_input, layout_choice)
     
+    # 4. English Corporate Output Actions
     st.markdown("---")
-    st.subheader("🚀 अंतिम पायरी: सर्व ५९० स्लिप्स एकाच क्लिकवर डाऊनलोड करा")
+    st.markdown("<h4 style='color: #374151; font-family: sans-serif;'>2. Export Compilation</h4>", unsafe_allow_html=True)
     
     printable_html = final_html.replace("<body>", '<body onload="window.print()">')
     
     st.download_button(
-        label=f"📥 सर्व {total_rows} मतदारांची एकत्रित फाईल डाऊनलोड करा",
+        label=f"📥 DOWNLOAD ALL {total_rows} VOTER SLIPS (PDF/HTML)",
         data=printable_html,
-        file_name=f"Balaji_Cyber_Point_All_{total_rows}_Slips.html",
+        file_name=f"Voter_Slips_Master_Compilation.html",
         mime="text/html",
+        use_container_width=True
     )
+    
+    st.info("System Instruction: Clicking the download button saves the production build. Opening the downloaded asset instantly initializes the default system print dialog box. Ensure appropriate margins and targets are configured before printing.")
