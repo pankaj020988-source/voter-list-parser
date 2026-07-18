@@ -5,7 +5,7 @@ import re
 
 st.set_page_config(page_title="Balaji Cyber Point - Ultimate Voter System", layout="wide")
 
-st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (अंतिम एकत्रित डाऊनलोड - ऑल इन वन्)")
+st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (अंतिम एकत्रित डाऊनलोड - ऑल इन वन)")
 
 # १. पॅनेल बॅनर आणि सेटिंग्ज
 st.sidebar.header("⚙️ पॅनेल कॉन्फिगरेशन")
@@ -46,29 +46,48 @@ if uploaded_file is not None:
     total_rows = len(df)
     st.success(f"✅ एक्सेल फाईल यशस्वीरित्या लोड झाली! एकूण मतदार: {total_rows}")
     
-    # ४. डायनॅमिक HTML ग्रिड जनरेशन लॉजिक (दोन बॉक्सच्या मधोमध कडक कटिंग लाईन फिक्स)
+    # ४. डायनॅमिक HTML ग्रिड जनरेशन लॉजिक (सर्व लेआउटसाठी परफेक्ट कटिंग लाईन)
     def generate_advanced_layout(data_frame, banner_b64, polling_station, layout_type):
-        # लेआउटनुसार अचूक मापे ठरवणे
+        # लेआउटनुसार अचूक मापे आणि कटिंग सेटिंग्ज
         if "१ पानावर १ स्लिप" in layout_type:
             grid_css = ".grid-container { display: block; }"
             box_width, box_height, banner_h, font_s = "132mm", "194mm", "115mm", "15px"
             page_padding = "padding: 8mm;"
             items_per_page = 1
+            wrapper_style = ""
         elif "१ पानावर २ स्लिप्स" in layout_type:
-            grid_css = ".grid-container { display: block; }"
+            # A5 वर २ स्लिप्स - मधोमध डॅश कटिंग लाईन
+            grid_css = ".grid-container { display: grid; grid-template-columns: 1fr; gap: 0mm; }"
             box_width, box_height, banner_h, font_s = "134mm", "94mm", "48mm", "11px"
             page_padding = "padding: 5mm 7mm;"
             items_per_page = 2
+            # पहिल्या स्लिपच्या खाली डॅश लाईन दिसेल जी कटिंग लाईनचे काम करेल
+            wrapper_style = ".grid-container > .outer-box:nth-child(1) { border-bottom: 1.5mm dashed #000000 !important; margin-bottom: 2mm; }"
         elif "४ स्लिप्स" in layout_type:
-            grid_css = ".grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }"
-            box_width, box_height, banner_h, font_s = "92mm", "135mm", "75mm", "12px"
+            # A4 वर ४ स्लिप्स - उभ्या आणि आडव्या दोन्ही बॉक्सच्या मधोमध कडक डॅश कटिंग लाईन
+            grid_css = ".grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 0mm; }"
+            box_width, box_height, banner_h, font_s = "94mm", "138mm", "75mm", "12px"
             page_padding = "padding: 6mm 4mm;"
             items_per_page = 4
+            # शेजारील आणि खालच्या बॉक्सच्या मधोमध परफेक्ट डॅश बॉर्डर
+            wrapper_style = """
+                .grid-container > .outer-box:nth-child(1) { border-right: 1.5mm dashed #000000 !important; border-bottom: 1.5mm dashed #000000 !important; margin-right: 2mm; margin-bottom: 2mm; }
+                .grid-container > .outer-box:nth-child(2) { border-bottom: 1.5mm dashed #000000 !important; margin-bottom: 2mm; }
+                .grid-container > .outer-box:nth-child(3) { border-right: 1.5mm dashed #000000 !important; margin-right: 2mm; }
+            """
         else: # ६ स्लिप्स
-            grid_css = ".grid-container { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 3mm; }"
+            # A4 वर ६ स्लिप्स - सर्व बॉक्सच्या मधोमध परफेक्ट डॅश कटिंग लाईन
+            grid_css = ".grid-container { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 0mm; }"
             box_width, box_height, banner_h, font_s = "94mm", "88mm", "42mm", "10.5px"
             page_padding = "padding: 4mm 3mm;"
             items_per_page = 6
+            wrapper_style = """
+                .grid-container > .outer-box:nth-child(odd) { border-right: 1.5mm dashed #000000 !important; margin-right: 2mm; }
+                .grid-container > .outer-box:nth-child(1), .grid-container > .outer-box:nth-child(2),
+                .grid-container > .outer-box:nth-child(3), .grid-container > .outer-box:nth-child(4) { 
+                    border-bottom: 1.5mm dashed #000000 !important; margin-bottom: 2mm; 
+                }
+            """
 
         html_content = f"""
         <html>
@@ -95,7 +114,7 @@ if uploaded_file is not None:
             .outer-box {{
                 width: {box_width};
                 height: {box_height};
-                border: 1.5mm solid #000000; /* सर्व बॉक्सला कडक काळी अखंड बॉर्डर */
+                border: 1.5mm solid #000000; /* मूळ अखंड काळी बॉर्डर */
                 box-sizing: border-box;
                 padding: 0px;
                 position: relative;
@@ -160,17 +179,8 @@ if uploaded_file is not None:
                 width: 48%;
             }}
             
-            /* दोन बॉक्सच्या मधोमध कडक कटिंग लाईनची रचना */
-            .between-box-cutter {{
-                width: {box_width};
-                text-align: center;
-                font-size: 10px;
-                color: #333;
-                font-weight: bold;
-                margin: 4mm 0;
-                border-top: 1.5px dashed #000000;
-                padding-top: 4px;
-            }}
+            /* डायनॅमिक कटिंग लाईन पॅटर्न */
+            {wrapper_style}
         </style>
         </head>
         <body>
@@ -182,11 +192,7 @@ if uploaded_file is not None:
             
             html_content += '<div class="page-sheet"><div class="grid-container">'
             
-            # बॅकएंड लूप ट्रॅकिंग इंडेक्स
-            current_item_count = 0
-            
             for _, row in page_voters:
-                current_item_count += 1
                 voter_no = str(row.get('अनुक्रमांक', row.get('मतदार नं.', row.get('अनु. क्र.', _ + 1))))
                 raw_name = row.get('मतदाराचे पूर्ण नांव', row.get('नाव', row.get('मतदाराचे पूर्ण नाव', '')))
                 
@@ -230,10 +236,6 @@ if uploaded_file is not None:
                     </div>
                 </div>
                 """
-                
-                # फिक्स: जर A5 वर २ स्लिप्सचा पर्याय असेल आणि हे पहिले कार्ड असेल, तर दोन बॉक्सच्या मधोमध कटिंग लाईन टाका
-                if "१ पानावर २ स्लिप्स" in layout_type and current_item_count == 1 and len(page_voters) > 1:
-                    html_content += '<div class="between-box-cutter">✂️ येथे कात्रीने किंवा स्केलने मधोमध कापावे ✂️</div>'
             
             html_content += '</div></div>'
             
@@ -254,5 +256,3 @@ if uploaded_file is not None:
         file_name=f"Balaji_Cyber_Point_All_{total_rows}_Slips.html",
         mime="text/html",
     )
-    
-    st.info("💡 **फायनल प्रिंट स्टेप:** बटनावर क्लिक करताच फाईल डाऊनलोड होईल. फाईल ओपन करा आणि तुमच्या ब्राउझरच्या प्रिंट सेटिंग्जमध्ये **'Save as PDF'** सिलेक्ट करून थेट सेव्ह करा!")
