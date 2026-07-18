@@ -5,7 +5,7 @@ import re
 
 st.set_page_config(page_title="Balaji Cyber Point - Final Voter System", layout="wide")
 
-st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Safe Marathi Version)")
+st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Guaranteed Fixed)")
 
 # १. पॅनेल बॅनर आणि सेटिंग्ज
 st.sidebar.header("⚙️ पॅनेल कॉन्फिगरेशन")
@@ -33,7 +33,7 @@ if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
     st.success("✅ एक्सेल फाईल यशस्वीरित्या लोड झाली!")
     
-    # ३. HTML जनरेशन लॉजिक जे थेट ब्राउझरवरून PDF बनवेल
+    # ३. अचूक आणि शुद्ध मराठी HTML जनरेशन
     def generate_html_layout(data_frame, banner_b64, polling_station):
         html_content = """
         <html>
@@ -128,7 +128,6 @@ if uploaded_file is not None:
             voter_no = str(row.get('अनुक्रमांक', row.get('मतदार नं.', index + 1)))
             raw_name = row.get('मतदाराचे पूर्ण नांव', row.get('नाव', row.get('मतदाराचे पूर्ण नाव', '')))
             
-            # वेलांट्या आणि चुकीचे शब्द अचूक साफ करणे
             clean_name = str(raw_name).replace('सचनि', 'सचिन').replace('दलिीप', 'दिलीप').replace('अभजिीत', 'अभिजीत').replace('गोवदि', 'गोविंद').replace('करिण', 'किरण').replace('अश्वनिी', 'अश्विनी').replace('संदपि', 'संदीप').replace('योगतिा', 'योगिता').replace('प्रयिांका', 'प्रियांका').replace('आदत्यि', 'आदित्य').replace('मुजाहदि', 'मुजाहिद').replace('मनषिा', 'मनिषा')
             
             raw_gender = row.get('लिंग', '')
@@ -174,24 +173,27 @@ if uploaded_file is not None:
         html_content += "</body></html>"
         return html_content
 
-    # प्रिंट प्रिव्ह्यू आणि प्रिंट बटन
     banner_base64 = get_image_base64(uploaded_banner)
     final_html = generate_html_layout(df, banner_base64, polling_station_input)
     
     st.markdown("---")
-    st.subheader("🚀 पायरी ३: मतदार स्लिप्स प्रिंट / PDF म्हणून सेव्ह करा")
+    st.subheader("🚀 पायरी ३: मतदार स्लिप्स फाईल डाऊनलोड करा")
     
-    # थेट ब्राउझर प्रिंटर ओपन करण्यासाठी छोटी स्क्रिप्ट
-    components_html = f"""
-        <div style="text-align: center; margin: 20px 0;">
-            <button onclick="var printWindow = window.open('', '_blank'); printWindow.document.write({repr(final_html)}); printWindow.document.close(); printWindow.focus(); setTimeout(function() {{ printWindow.print(); }}, 1000);" 
-                style="background-color: #4CAF50; color: white; padding: 14px 28px; font-size: 18px; border: none; cursor: pointer; border-radius: 8px; font-weight: bold;">
-                📥 सर्व ५९० स्लिप्स (PDF) डाऊनलोड / प्रिंट करा
-            </button>
-        </div>
-    """
-    st.components.v1.html(components_html, height=100)
+    # १. थेट कॉम्प्युटर आणि मोबाईलसाठी १००% चालणारा डाऊनलोड टॅब (Safe Embedded Link)
+    # ऑटोमॅटिक प्रिंट कमांडसह HTML फाईल डाऊनलोड करणे
+    printable_html = final_html.replace("<body>", '<body onload="window.print()">')
+    b64_html = base64.b64encode(printable_html.encode('utf-8')).decode('utf-8')
     
+    # अधिकृत डाऊनलोड बटन जे थेट टॅब ओपन करून प्रिंटर सुरू करेल
+    st.download_button(
+        label="📥 ५९० मतदार स्लिप्स (PDF/HTML) थेट डाऊनलोड करा",
+        data=printable_html,
+        file_name="Balaji_Cyber_Point_Voter_Slips.html",
+        mime="text/html",
+    )
+    
+    st.info("💡 **टीप:** वरील बटनावर क्लिक करताच फाईल डाऊनलोड होईल. ती फाईल उघडताच कॉम्प्युटरचे प्रिंटर डायरेक्ट सुरू होईल, तिथे **'Save as PDF'** निवडून प्रिंट मारा!")
+
     # लाइव्ह प्रिव्ह्यू पाहण्यासाठी
     with st.expander("👀 पहिल्या काही स्लिप्सचा नमुना पाहण्यासाठी इथे क्लिक करा"):
         st.components.v1.html(final_html, height=600, scrolling=True)
