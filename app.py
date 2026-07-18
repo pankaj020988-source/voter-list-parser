@@ -46,9 +46,8 @@ if uploaded_file is not None:
     total_rows = len(df)
     st.success(f"✅ एक्सेल फाईल यशस्वीरित्या लोड झाली! एकूण मतदार: {total_rows}")
     
-    # ४. डायनॅमिक HTML ग्रिड जनरेशन लॉजिक (सर्व लेआउटसाठी परफेक्ट कटिंग लाईन)
+    # ४. डायनॅमिक HTML ग्रिड जनरेशन लॉजिक (बॉक्सच्या बाहेर स्वतंत्र कटिंग लाईन फिक्स)
     def generate_advanced_layout(data_frame, banner_b64, polling_station, layout_type):
-        # लेआउटनुसार अचूक मापे आणि कटिंग सेटिंग्ज
         if "१ पानावर १ स्लिप" in layout_type:
             grid_css = ".grid-container { display: block; }"
             box_width, box_height, banner_h, font_s = "132mm", "194mm", "115mm", "15px"
@@ -56,38 +55,83 @@ if uploaded_file is not None:
             items_per_page = 1
             wrapper_style = ""
         elif "१ पानावर २ स्लिप्स" in layout_type:
-            # A5 वर २ स्लिप्स - मधोमध डॅश कटिंग लाईन
-            grid_css = ".grid-container { display: grid; grid-template-columns: 1fr; gap: 0mm; }"
+            # A5 वर २ स्लिप्स - दोन बॉक्सच्या मधोमध ६mm ची मोकळी जागा आणि त्यात डॅश लाईन
+            grid_css = ".grid-container { display: grid; grid-template-columns: 1fr; gap: 6mm; background-image: linear-gradient(to right, #000 33%, rgba(255,255,255,0) 0%); background-position: center 103mm; background-size: 8px 1.5px; background-repeat: repeat-x; }"
             box_width, box_height, banner_h, font_s = "134mm", "94mm", "48mm", "11px"
             page_padding = "padding: 5mm 7mm;"
             items_per_page = 2
-            # पहिल्या स्लिपच्या खाली डॅश लाईन दिसेल जी कटिंग लाईनचे काम करेल
-            wrapper_style = ".grid-container > .outer-box:nth-child(1) { border-bottom: 1.5mm dashed #000000 !important; margin-bottom: 2mm; }"
+            wrapper_style = ""
         elif "४ स्लिप्स" in layout_type:
-            # A4 वर ४ स्लिप्स - उभ्या आणि आडव्या दोन्ही बॉक्सच्या मधोमध कडक डॅश कटिंग लाईन
-            grid_css = ".grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 0mm; }"
-            box_width, box_height, banner_h, font_s = "94mm", "138mm", "75mm", "12px"
+            # A4 वर ४ स्लिप्स - बॉक्सच्या बाहेर मधोमध प्लस (+) आकारात कडक डॅश कटिंग लाईन
+            grid_css = """
+                .grid-container { 
+                    display: grid; 
+                    grid-template-columns: 1fr 1fr; 
+                    gap: 8mm; 
+                    position: relative;
+                }
+                .grid-container::before {
+                    content: "";
+                    position: absolute;
+                    left: 50%;
+                    top: 0;
+                    bottom: 0;
+                    border-left: 1.5px dashed #000000;
+                    transform: translateX(-50%);
+                }
+                .grid-container::after {
+                    content: "";
+                    position: absolute;
+                    top: 50%;
+                    left: 0;
+                    right: 0;
+                    border-top: 1.5px dashed #000000;
+                    transform: translateY(-50%);
+                }
+            """
+            box_width, box_height, banner_h, font_s = "92mm", "135mm", "75mm", "12px"
             page_padding = "padding: 6mm 4mm;"
             items_per_page = 4
-            # शेजारील आणि खालच्या बॉक्सच्या मधोमध परफेक्ट डॅश बॉर्डर
-            wrapper_style = """
-                .grid-container > .outer-box:nth-child(1) { border-right: 1.5mm dashed #000000 !important; border-bottom: 1.5mm dashed #000000 !important; margin-right: 2mm; margin-bottom: 2mm; }
-                .grid-container > .outer-box:nth-child(2) { border-bottom: 1.5mm dashed #000000 !important; margin-bottom: 2mm; }
-                .grid-container > .outer-box:nth-child(3) { border-right: 1.5mm dashed #000000 !important; margin-right: 2mm; }
-            """
+            wrapper_style = ""
         else: # ६ स्लिप्स
-            # A4 वर ६ स्लिप्स - सर्व बॉक्सच्या मधोमध परफेक्ट डॅश कटिंग लाईन
-            grid_css = ".grid-container { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 0mm; }"
+            # A4 वर ६ स्लिप्स - सर्व बॉक्सच्या बाहेर मोकळ्या जागेत परफेक्ट ग्रीड डॅश कटिंग लाईन्स
+            grid_css = """
+                .grid-container { 
+                    display: grid; 
+                    grid-template-columns: 1fr 1fr; 
+                    grid-template-rows: 1fr 1fr 1fr; 
+                    gap: 6mm;
+                    position: relative;
+                }
+                .grid-container::before {
+                    content: "";
+                    position: absolute;
+                    left: 50%;
+                    top: 0;
+                    bottom: 0;
+                    border-left: 1.5px dashed #000000;
+                    transform: translateX(-50%);
+                }
+                .grid-container::after {
+                    content: "";
+                    position: absolute;
+                    top: 33.33%;
+                    left: 0;
+                    right: 0;
+                    border-top: 1.5px dashed #000000;
+                }
+                .grid-container-horizontal-2 {
+                    position: absolute;
+                    top: 66.66%;
+                    left: 0;
+                    right: 0;
+                    border-top: 1.5px dashed #000000;
+                }
+            """
             box_width, box_height, banner_h, font_s = "94mm", "88mm", "42mm", "10.5px"
             page_padding = "padding: 4mm 3mm;"
             items_per_page = 6
-            wrapper_style = """
-                .grid-container > .outer-box:nth-child(odd) { border-right: 1.5mm dashed #000000 !important; margin-right: 2mm; }
-                .grid-container > .outer-box:nth-child(1), .grid-container > .outer-box:nth-child(2),
-                .grid-container > .outer-box:nth-child(3), .grid-container > .outer-box:nth-child(4) { 
-                    border-bottom: 1.5mm dashed #000000 !important; margin-bottom: 2mm; 
-                }
-            """
+            wrapper_style = ""
 
         html_content = f"""
         <html>
@@ -114,7 +158,7 @@ if uploaded_file is not None:
             .outer-box {{
                 width: {box_width};
                 height: {box_height};
-                border: 1.5mm solid #000000; /* मूळ अखंड काळी बॉर्डर */
+                border: 1.5mm solid #000000 !important; /* प्रत्येक बॉक्सला शंभर टक्के अखंड काळी बॉर्डर */
                 box-sizing: border-box;
                 padding: 0px;
                 position: relative;
@@ -178,8 +222,6 @@ if uploaded_file is not None:
             .right-col {{
                 width: 48%;
             }}
-            
-            /* डायनॅमिक कटिंग लाईन पॅटर्न */
             {wrapper_style}
         </style>
         </head>
@@ -191,6 +233,10 @@ if uploaded_file is not None:
             page_voters = voter_list[p:p+items_per_page]
             
             html_content += '<div class="page-sheet"><div class="grid-container">'
+            
+            # ६ स्लिप्स लेआउटसाठी अंतर्गत अतिरिक्त लाईन जोडणे
+            if "६ स्लिप्स" in layout_type:
+                html_content += '<div class="grid-container-horizontal-2"></div>'
             
             for _, row in page_voters:
                 voter_no = str(row.get('अनुक्रमांक', row.get('मतदार नं.', row.get('अनु. क्र.', _ + 1))))
