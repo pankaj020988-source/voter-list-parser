@@ -12,11 +12,16 @@ st.sidebar.header("⚙️ पॅनेल कॉन्फिगरेशन")
 uploaded_banner = st.sidebar.file_uploader("१. पॅनेलचा बॅनर इमेज अपलोड करा", type=["jpg", "jpeg", "png"])
 polling_station_input = st.sidebar.text_input("२. मतदान केंद्राचे नाव", "ज. प. प्रा. शाळा")
 
-# २. लेआउट चॉईस (A5 वर 1, A4 वर 4, A4 वर 6)
+# २. लेआउट चॉईस (A5 वर 1, A5 वर 2, A4 वर 4, A4 वर 6)
 st.sidebar.header("📐 प्रिंट लेआउट सेटिंग्ज")
 layout_choice = st.sidebar.radio(
     "तुम्हाला एका पानावर किती स्लिप्स पाहिजेत?",
-    ["A5 पाडलेले लेआउट (१ पानावर १ स्लिप)", "A4 पाडलेले लेआउट (१ पानावर ४ स्लिप्स)", "A4 पाडलेले लेआउट (१ पानावर ६ स्लिप्स)"]
+    [
+        "A5 पाडलेले लेआउट (१ पानावर १ स्लिप)", 
+        "A5 पाडलेले लेआउट (१ पानावर २ स्लिप्स)", 
+        "A4 पाडलेले लेआउट (१ पानावर ४ स्लिप्स)", 
+        "A4 पाडलेले लेआउट (१ पानावर ६ स्लिप्स)"
+    ]
 )
 
 # ३. एक्सेल फाईल अपलोड
@@ -60,21 +65,23 @@ if uploaded_file is not None:
 
     # ४. डायनॅमिक HTML ग्रिड जनरेशन लॉजिक
     def generate_advanced_layout(data_frame, banner_b64, polling_station, layout_type):
-        # लेआउटनुसार सेटिंग्ज ठरवणे
-        if "१ स्लिप" in layout_type:
-            page_size = "A5 portrait"
+        # लेआउटनुसार अचूक मापे ठरवणे
+        if "१ पानावर १ स्लिप" in layout_type:
             grid_css = ".grid-container { display: block; }"
             box_width, box_height, banner_h, font_s = "132mm", "194mm", "115mm", "15px"
             page_padding = "padding: 8mm;"
             items_per_page = 1
+        elif "१ पानावर २ स्लिप्स" in layout_type:
+            grid_css = ".grid-container { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 4mm; }"
+            box_width, box_height, banner_h, font_s = "134mm", "95mm", "48mm", "11px"
+            page_padding = "padding: 6mm 7mm;"
+            items_per_page = 2
         elif "४ स्लिप्स" in layout_type:
-            page_size = "A4 portrait"
             grid_css = ".grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }"
             box_width, box_height, banner_h, font_s = "92mm", "135mm", "75mm", "12px"
             page_padding = "padding: 6mm 4mm;"
             items_per_page = 4
         else: # ६ स्लिप्स
-            page_size = "A4 portrait"
             grid_css = ".grid-container { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 3mm; }"
             box_width, box_height, banner_h, font_s = "94mm", "88mm", "42mm", "10.5px"
             page_padding = "padding: 4mm 3mm;"
@@ -174,7 +181,6 @@ if uploaded_file is not None:
         <body>
         """
         
-        # मतदारांना पानांच्या सेटमध्ये विभागणे
         voter_list = list(data_frame.iterrows())
         for p in range(0, len(voter_list), items_per_page):
             page_voters = voter_list[p:p+items_per_page]
@@ -226,7 +232,7 @@ if uploaded_file is not None:
                 </div>
                 """
             
-            html_content += '</div></div>' # grid-container & page-sheet शेवट
+            html_content += '</div></div>'
             
         html_content += "</body></html>"
         return html_content
@@ -240,10 +246,10 @@ if uploaded_file is not None:
     printable_html = final_html.replace("<body>", '<body onload="window.print()">')
     
     st.download_button(
-        label=f"📥 {layout_choice.split(' ')[0]} लेआउटची फाईल डाऊनलोड करा",
+        label="📥 निवडलेल्या लेआउटची फाईल थेट डाऊनलोड करा",
         data=printable_html,
-        file_name=f"Balaji_Cyber_Point_MultiLayout_{selected_batch_idx+1}.html",
+        file_name=f"Balaji_Cyber_Point_Advanced_Slips.html",
         mime="text/html",
     )
     
-    st.info("💡 **प्रिंटिंग सोपी स्टेप:** डाऊनलोड केलेल्या फाईलवर डबल क्लिक करा, ब्राउझरमध्ये पेज ओपन होताच प्रिंट कमांड सुरू होईल. जर **४ किंवा ६ स्लिप्स** निवडल्या असतील तर प्रिंट सेटिंग्जमध्ये **A4** साईझ निवडा आणि **१ स्लिप** साठी **A5** निवडा!")
+    st.info("💡 **प्रिंटिंग टीप:** जर **A5 वर २ स्लिप्स** किंवा **A5 वर १ स्लिप** निवडली असेल तर प्रिंटर सेटिंग्जमध्ये **A5** पेपर साईझ निवडा. जर ४ किंवा ६ स्लिप्स असतील तर **A4** निवडा!")
