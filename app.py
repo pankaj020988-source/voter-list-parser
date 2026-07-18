@@ -3,16 +3,16 @@ import pandas as pd
 import base64
 import re
 
-st.set_page_config(page_title="Balaji Cyber Point - Advanced Voter System", layout="wide")
+st.set_page_config(page_title="Balaji Cyber Point - Ultimate Voter System", layout="wide")
 
-st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (मल्टी-लेआउट सिस्टीम - कागद बचत मोड)")
+st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (अंतिम एकत्रित डाऊनलोड - ऑल इन वन)")
 
 # १. पॅनेल बॅनर आणि सेटिंग्ज
 st.sidebar.header("⚙️ पॅनेल कॉन्फिगरेशन")
 uploaded_banner = st.sidebar.file_uploader("१. पॅनेलचा बॅनर इमेज अपलोड करा", type=["jpg", "jpeg", "png"])
 polling_station_input = st.sidebar.text_input("२. मतदान केंद्राचे नाव", "ज. प. प्रा. शाळा")
 
-# २. लेआउट चॉईस (A5 वर 1, A5 वर 2, A4 वर 4, A4 वर 6)
+# २. लेआउट चॉईस
 st.sidebar.header("📐 प्रिंट लेआउट सेटिंग्ज")
 layout_choice = st.sidebar.radio(
     "तुम्हाला एका पानावर किती स्लिप्स पाहिजेत?",
@@ -46,46 +46,35 @@ if uploaded_file is not None:
     total_rows = len(df)
     st.success(f"✅ एक्सेल फाईल यशस्वीरित्या लोड झाली! एकूण मतदार: {total_rows}")
     
-    # सर्व्हर हँग होऊ नये म्हणून १००-१०० मतदारांचे तुकडे (Safe Batching)
-    batch_size = 100
-    num_batches = (total_rows // batch_size) + (1 if total_rows % batch_size > 0 else 0)
-    
-    batch_options = []
-    for i in range(num_batches):
-        start_idx = i * batch_size
-        end_idx = min(start_idx + batch_size, total_rows)
-        batch_options.append(f"मतदार क्र. {start_idx + 1} ते {end_idx}")
-        
-    selected_batch_str = st.selectbox("मजकूर लोड करण्यासाठी मतदारांची बॅच निवडा:", batch_options)
-    selected_batch_idx = batch_options.index(selected_batch_str)
-    
-    start_pos = selected_batch_idx * batch_size
-    end_pos = min(start_pos + batch_size, total_rows)
-    df_batch = df.iloc[start_pos:end_pos]
-
-    # ४. डायनॅमिक HTML ग्रिड जनरेशन लॉजिक
+    # ४. डायनॅमिक HTML ग्रिड जनरेशन लॉजिक (एकत्रित पूर्ण डेटा प्रोसेसिंग)
     def generate_advanced_layout(data_frame, banner_b64, polling_station, layout_type):
-        # लेआउटनुसार अचूक मापे ठरवणे
+        # लेआउटनुसार अचूक मापे आणि कटिंग लाईन्स ठरवणे
         if "१ पानावर १ स्लिप" in layout_type:
             grid_css = ".grid-container { display: block; }"
             box_width, box_height, banner_h, font_s = "132mm", "194mm", "115mm", "15px"
             page_padding = "padding: 8mm;"
             items_per_page = 1
+            box_style = "border: 1.5mm solid #000000;"
         elif "१ पानावर २ स्लिप्स" in layout_type:
-            grid_css = ".grid-container { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 4mm; }"
+            # A5 वर २ स्लिप्सच्या मध्ये अचूक डॅश कटिंग लाईन
+            grid_css = ".grid-container { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 0mm; }"
             box_width, box_height, banner_h, font_s = "134mm", "95mm", "48mm", "11px"
             page_padding = "padding: 6mm 7mm;"
             items_per_page = 2
+            box_style = "border: 1.2mm solid #000000; margin-bottom: 2mm; border-style: solid solid dashed solid;" 
+            # टीप: वरील सीएसएस मुळे पहिल्या स्लिपच्या तळाशी डॅश लाईन येईल जी कटिंग लाईन म्हणून काम करेल
         elif "४ स्लिप्स" in layout_type:
             grid_css = ".grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }"
             box_width, box_height, banner_h, font_s = "92mm", "135mm", "75mm", "12px"
             page_padding = "padding: 6mm 4mm;"
             items_per_page = 4
+            box_style = "border: 1.2mm dashed #000000;" # कटिंगसाठी डॅश बॉर्डर
         else: # ६ स्लिप्स
             grid_css = ".grid-container { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 3mm; }"
             box_width, box_height, banner_h, font_s = "94mm", "88mm", "42mm", "10.5px"
             page_padding = "padding: 4mm 3mm;"
             items_per_page = 6
+            box_style = "border: 1.2mm dashed #000000;" # कटिंगसाठी डॅश बॉर्डर
 
         html_content = f"""
         <html>
@@ -112,12 +101,16 @@ if uploaded_file is not None:
             .outer-box {{
                 width: {box_width};
                 height: {box_height};
-                border: 1.5mm solid #000000;
+                {box_style}
                 box-sizing: border-box;
                 padding: 0px;
                 position: relative;
                 overflow: hidden;
                 background: #fff;
+            }}
+            /* A5 २ स्लिप्ससाठी दुसऱ्या स्लिपची बॉर्डर पुन्हा नॉर्मल करणे जेणेकरून कटिंग सोपे होईल */
+            .grid-container .outer-box:nth-child(2) {{
+                border-style: solid;
             }}
             .banner-container {{
                 width: 100%;
@@ -237,19 +230,20 @@ if uploaded_file is not None:
         html_content += "</body></html>"
         return html_content
 
+    # संपूर्ण ५९० मतदारांचा डेटा एकत्रित प्रोसेस करणे
     banner_base64 = get_image_base64(uploaded_banner)
-    final_html = generate_advanced_layout(df_batch, banner_base64, polling_station_input, layout_choice)
+    final_html = generate_advanced_layout(df, banner_base64, polling_station_input, layout_choice)
     
     st.markdown("---")
-    st.subheader("🚀 पायरी ३: निवडलेल्या लेआउटनुसार फाईल डाऊनलोड करा")
+    st.subheader("🚀 अंतिम पायरी: सर्व ५९० स्लिप्स एकाच क्लिकवर डाऊनलोड करा")
     
     printable_html = final_html.replace("<body>", '<body onload="window.print()">')
     
     st.download_button(
-        label="📥 निवडलेल्या लेआउटची फाईल थेट डाऊनलोड करा",
+        label=f"📥 सर्व {total_rows} मतदारांची एकत्रित फाईल डाऊनलोड करा",
         data=printable_html,
-        file_name=f"Balaji_Cyber_Point_Advanced_Slips.html",
+        file_name=f"Balaji_Cyber_Point_All_{total_rows}_Slips.html",
         mime="text/html",
     )
     
-    st.info("💡 **प्रिंटिंग टीप:** जर **A5 वर २ स्लिप्स** किंवा **A5 वर १ स्लिप** निवडली असेल तर प्रिंटर सेटिंग्जमध्ये **A5** पेपर साईझ निवडा. जर ४ किंवा ६ स्लिप्स असतील तर **A4** निवडा!")
+    st.info("💡 **फायनल प्रिंट स्टेप:** बटनावर क्लिक करताच फाईल डाऊनलोड होईल. फाईल ओपन करा आणि तुमच्या ब्राउझरच्या प्रिंट सेटिंग्जमध्ये **'Save as PDF'** सिलेक्ट करून थेट सेव्ह करा!")
