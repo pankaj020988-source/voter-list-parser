@@ -33,7 +33,7 @@ if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
     st.success("✅ एक्सेल फाईल यशस्वीरित्या लोड झाली!")
     
-    # ३. बदललेला HTML लेआउट (बॅनर मोठा, माहिती खाली लहान भागात फिट)
+    # ३. बदललेला HTML लेआउट (ओळखपत्र क्र. अचूक फिक्स)
     def generate_html_layout(data_frame, banner_b64, polling_station):
         html_content = """
         <html>
@@ -65,7 +65,6 @@ if uploaded_file is not None:
                 padding: 0px;
                 position: relative;
             }
-            /* बॅनरची जागा वाढवून ११५mm केली (मोठा बॅनर) */
             .banner-container {
                 width: 100%;
                 height: 115mm;
@@ -98,7 +97,6 @@ if uploaded_file is not None:
                 border-top: 2px dashed #555555;
                 margin: 3px 10px 0 10px;
             }
-            /* मतदार माहिती खाली लहान ६५mm च्या भागात सुटसुटीत बसेल अशी रचना */
             .content-container {
                 padding: 12px 20px;
                 font-size: 15px;
@@ -127,7 +125,7 @@ if uploaded_file is not None:
         """
         
         for index, row in data_frame.iterrows():
-            voter_no = str(row.get('अनुक्रमांक', row.get('मतदार नं.', index + 1)))
+            voter_no = str(row.get('अनुक्रमांक', row.get('मतदार नं.', row.get('अनु. क्र.', index + 1))))
             raw_name = row.get('मतदाराचे पूर्ण नांव', row.get('नाव', row.get('मतदाराचे पूर्ण नाव', '')))
             
             clean_name = str(raw_name).replace('सचनि', 'सचिन').replace('दलिीप', 'दिलीप').replace('अभजिीत', 'अभिजीत').replace('गोवदि', 'गोविंद').replace('करिण', 'किरण').replace('अश्वनिी', 'अश्विनी').replace('संदपि', 'संदीप').replace('योगतिा', 'योगिता').replace('प्रयिांका', 'प्रियांका').replace('आदत्यि', 'आदित्य').replace('मुजाहदि', 'मुजाहिद').replace('मनषिा', 'मनिषा')
@@ -135,14 +133,16 @@ if uploaded_file is not None:
             raw_gender = row.get('लिंग', '')
             clean_gender = clean_gender_and_text(raw_gender)
             age = str(row.get('वय', ''))
-            epic_no = str(row.get('मतदार ओळखपत्र क्र. (Voter ID)', row.get('मतदार ओळखपत्र क्र.', '')))
+            
+            # एरर फिक्स: एक्सेल मधील 'मतदार ओळखपत्र क्र' कॉलम कॉलम अचूकपणे मॅप केला
+            epic_no = str(row.get('मतदार ओळखपत्र क्र', row.get('मतदार ओळखपत्र क्र.', row.get('मतदार ओळखपत्र क्र. (Voter ID)', ''))))
+            
             house_no = str(row.get('घर क्रमांक', '-'))
-            part_no = str(row.get('भाग / सिरीयल क्र.', row.get('यादी भाग क्र.', '')))
+            part_no = str(row.get('भाग / सिरीयल क्र.', row.get('भाग / सिरीयल क्र', row.get('यादी भाग क्र.', ''))))
             
             html_content += f"""
             <div class="page-container">
                 <div class="outer-box">
-                    <!-- १. मोठा पॅनेल बॅनर (आता मोठ्या जागेत फिट) -->
                     <div class="banner-container">
             """
             if banner_b64:
@@ -153,11 +153,9 @@ if uploaded_file is not None:
             html_content += f"""
                     </div>
                     
-                    <!-- २. कापावे संदेश आणि रेष -->
                     <div class="cut-line-text">----------------- मतदार केंद्रात जाण्यापूर्वी येथून कापावे -----------------</div>
                     <div class="cut-line"></div>
                     
-                    <!-- ३. मतदाराची माहिती (खालच्या भागात लहान आणि कम्पेक्ट फिट) -->
                     <div class="content-container">
                         <div class="info-row"><span class="bold-label">मतदार नं. :</span> {voter_no}</div>
                         <div class="info-row"><span class="bold-label">नाव :</span> {clean_name}</div>
@@ -189,11 +187,9 @@ if uploaded_file is not None:
     st.download_button(
         label="📥 ५९० मतदार स्लिप्स (PDF/HTML) थेट डाऊनलोड करा",
         data=printable_html,
-        file_name="Balaji_Cyber_Point_Voter_Slips_LargeBanner.html",
+        file_name="Balaji_Cyber_Point_Voter_Slips_Final.html",
         mime="text/html",
     )
-    
-    st.info("💡 **टीप:** डाऊनलोड केलेल्या फाईलवर क्लिक करताच प्रिंटर सुरू होईल, तिथे **'Save as PDF'** निवडून सेव्ह करा!")
 
     with st.expander("👀 पहिल्या काही स्लिप्सचा नवीन नमुना पाहण्यासाठी इथे क्लिक करा"):
         st.components.v1.html(final_html, height=650, scrolling=True)
