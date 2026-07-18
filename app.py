@@ -5,7 +5,7 @@ import re
 
 st.set_page_config(page_title="Balaji Cyber Point - Final Voter System", layout="wide")
 
-st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Guaranteed Fixed)")
+st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Large Banner Layout)")
 
 # १. पॅनेल बॅनर आणि सेटिंग्ज
 st.sidebar.header("⚙️ पॅनेल कॉन्फिगरेशन")
@@ -33,7 +33,7 @@ if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
     st.success("✅ एक्सेल फाईल यशस्वीरित्या लोड झाली!")
     
-    # ३. अचूक आणि शुद्ध मराठी HTML जनरेशन
+    # ३. बदललेला HTML लेआउट (बॅनर मोठा, माहिती खाली लहान भागात फिट)
     def generate_html_layout(data_frame, banner_b64, polling_station):
         html_content = """
         <html>
@@ -65,9 +65,10 @@ if uploaded_file is not None:
                 padding: 0px;
                 position: relative;
             }
+            /* बॅनरची जागा वाढवून ११५mm केली (मोठा बॅनर) */
             .banner-container {
                 width: 100%;
-                height: 65mm;
+                height: 115mm;
                 overflow: hidden;
                 border-bottom: 1px solid #000;
             }
@@ -81,8 +82,8 @@ if uploaded_file is not None:
                 height: 100%;
                 background-color: #f0f4f8;
                 text-align: center;
-                line-height: 65mm;
-                font-size: 18px;
+                line-height: 115mm;
+                font-size: 22px;
                 font-weight: bold;
                 color: #555555;
             }
@@ -97,14 +98,15 @@ if uploaded_file is not None:
                 border-top: 2px dashed #555555;
                 margin: 3px 10px 0 10px;
             }
+            /* मतदार माहिती खाली लहान ६५mm च्या भागात सुटसुटीत बसेल अशी रचना */
             .content-container {
-                padding: 20px 25px;
-                font-size: 18px;
-                line-height: 2.2;
+                padding: 12px 20px;
+                font-size: 15px;
+                line-height: 1.8;
                 color: #000000;
             }
             .info-row {
-                margin-bottom: 6px;
+                margin-bottom: 3px;
             }
             .bold-label {
                 font-weight: 700;
@@ -140,19 +142,22 @@ if uploaded_file is not None:
             html_content += f"""
             <div class="page-container">
                 <div class="outer-box">
+                    <!-- १. मोठा पॅनेल बॅनर (आता मोठ्या जागेत फिट) -->
                     <div class="banner-container">
             """
             if banner_b64:
                 html_content += f'<img src="data:image/jpeg;base64,{banner_b64}" class="banner-img">'
             else:
-                html_content += '<div class="no-banner">[ इथे पॅनेल बॅनर दिसेल ]</div>'
+                html_content += '<div class="no-banner">[ इथे तुमचा मोठा पॅनेल बॅनर दिसेल ]</div>'
                 
             html_content += f"""
                     </div>
                     
-                    <div class="cut-line-text">----------------- मतदान केंद्रात जाण्यापूर्वी येथून कापावे -----------------</div>
+                    <!-- २. कापावे संदेश आणि रेष -->
+                    <div class="cut-line-text">----------------- मतदार केंद्रात जाण्यापूर्वी येथून कापावे -----------------</div>
                     <div class="cut-line"></div>
                     
+                    <!-- ३. मतदाराची माहिती (खालच्या भागात लहान आणि कम्पेक्ट फिट) -->
                     <div class="content-container">
                         <div class="info-row"><span class="bold-label">मतदार नं. :</span> {voter_no}</div>
                         <div class="info-row"><span class="bold-label">नाव :</span> {clean_name}</div>
@@ -164,7 +169,7 @@ if uploaded_file is not None:
                             <div class="right-col"><span class="bold-label">भाग क्रमांक :</span> {part_no}</div>
                         </div>
                         
-                        <div class="info-row" style="margin-top: 4px;"><span class="bold-label">मतदान केंद्र :</span> {polling_station}</div>
+                        <div class="info-row" style="margin-top: 2px;"><span class="bold-label">मतदान केंद्र :</span> {polling_station}</div>
                     </div>
                 </div>
             </div>
@@ -179,21 +184,16 @@ if uploaded_file is not None:
     st.markdown("---")
     st.subheader("🚀 पायरी ३: मतदार स्लिप्स फाईल डाऊनलोड करा")
     
-    # १. थेट कॉम्प्युटर आणि मोबाईलसाठी १००% चालणारा डाऊनलोड टॅब (Safe Embedded Link)
-    # ऑटोमॅटिक प्रिंट कमांडसह HTML फाईल डाऊनलोड करणे
     printable_html = final_html.replace("<body>", '<body onload="window.print()">')
-    b64_html = base64.b64encode(printable_html.encode('utf-8')).decode('utf-8')
     
-    # अधिकृत डाऊनलोड बटन जे थेट टॅब ओपन करून प्रिंटर सुरू करेल
     st.download_button(
         label="📥 ५९० मतदार स्लिप्स (PDF/HTML) थेट डाऊनलोड करा",
         data=printable_html,
-        file_name="Balaji_Cyber_Point_Voter_Slips.html",
+        file_name="Balaji_Cyber_Point_Voter_Slips_LargeBanner.html",
         mime="text/html",
     )
     
-    st.info("💡 **टीप:** वरील बटनावर क्लिक करताच फाईल डाऊनलोड होईल. ती फाईल उघडताच कॉम्प्युटरचे प्रिंटर डायरेक्ट सुरू होईल, तिथे **'Save as PDF'** निवडून प्रिंट मारा!")
+    st.info("💡 **टीप:** डाऊनलोड केलेल्या फाईलवर क्लिक करताच प्रिंटर सुरू होईल, तिथे **'Save as PDF'** निवडून सेव्ह करा!")
 
-    # लाइव्ह प्रिव्ह्यू पाहण्यासाठी
-    with st.expander("👀 पहिल्या काही स्लिप्सचा नमुना पाहण्यासाठी इथे क्लिक करा"):
-        st.components.v1.html(final_html, height=600, scrolling=True)
+    with st.expander("👀 पहिल्या काही स्लिप्सचा नवीन नमुना पाहण्यासाठी इथे क्लिक करा"):
+        st.components.v1.html(final_html, height=650, scrolling=True)
