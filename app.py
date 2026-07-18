@@ -12,7 +12,7 @@ import re
 
 st.set_page_config(page_title="Balaji Cyber Point - Final Voter System", layout="wide")
 
-st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Low Size & Clean Marathi)")
+st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Low Size & Clean Layout)")
 
 # १. पॅनेल बॅनर आणि सेटिंग्ज
 st.sidebar.header("⚙️ पॅनेल कॉन्फिगरेशन")
@@ -23,27 +23,6 @@ polling_station_input = st.sidebar.text_input("२. मतदान केंद
 st.subheader("📊 मतदार एक्सेल फाईल अपलोड करा")
 uploaded_file = st.file_uploader("तुमची एक्सेल फाईल (.xlsx) इथे अपलोड करा", type=["xlsx"])
 
-# मराठी अक्षरे, जोडाक्षरे आणि वेलांटी शंभर टक्के अचूक दाखवण्यासाठी गुगलचा 'Noto Sans Devanagari' फॉन्ट रजिस्टर करणे
-@st.cache_resource
-def register_marathi_font():
-    try:
-        font_url = "https://github.com/googlefonts/noto-fonts/raw/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf"
-        font_data = urllib.request.urlopen(font_url).read()
-        font_io = io.BytesIO(font_data)
-        pdfmetrics.registerFont(TTFont('MarathiSans', font_io))
-        
-        font_bold_url = "https://github.com/googlefonts/noto-fonts/raw/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Bold.ttf"
-        font_bold_data = urllib.request.urlopen(font_bold_url).read()
-        font_bold_io = io.BytesIO(font_bold_data)
-        pdfmetrics.registerFont(TTFont('MarathiSans-Bold', font_bold_io))
-        
-        return 'MarathiSans'
-    except Exception as e:
-        return 'Helvetica'
-
-font_name = register_marathi_font()
-
-# जेंडर मधील चुका शुद्ध मराठीत सुधारणारे फंक्शन
 def clean_gender_and_text(text):
     text = str(text).strip()
     if re.search(r'(सतरी|त्री|जी|श्रीमती|स्त्री|^str|^st|^q|^g)', text, re.IGNORECASE):
@@ -58,9 +37,20 @@ if uploaded_file is not None:
     
     # ३. सुटसुटीत आणि अचूक पीडीएफ जनरेशन लॉजिक (Low Size PDF)
     def generate_perfect_slips(data_frame, banner_bytes, polling_station):
+        # ॲप क्रॅश टाळण्यासाठी फॉन्ट डाऊनलोडिंग बटन दाबल्यानंतर आतमध्ये ठेवले आहे
+        font_name = 'Helvetica'
+        try:
+            font_url = "https://github.com/googlefonts/noto-fonts/raw/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf"
+            font_data = urllib.request.urlopen(font_url).read()
+            font_io = io.BytesIO(font_data)
+            pdfmetrics.registerFont(TTFont('MarathiSans', font_io))
+            font_name = 'MarathiSans'
+        except:
+            pass
+
         buffer = io.BytesIO()
         
-        # A5 Portrait सेटअप - मार्जिन्स कमी केल्या आहेत जेणेकरून बॉर्डर कडेला बसेल
+        # A5 Portrait सेटअप - कडांपर्यंत परफेक्ट फिटिंगसाठी मार्जिन्स १८ ठेवल्या आहेत
         doc = SimpleDocTemplate(
             buffer, 
             pagesize=A5, 
@@ -71,19 +61,17 @@ if uploaded_file is not None:
         )
         story = []
         
-        # मुख्य मतदार माहितीसाठी फाईन स्टाईल (Font Size 16 - सुटसुटीत आणि ठळक)
         marathi_style = ParagraphStyle(
             'CleanMarathiStyle',
-            fontName='MarathiSans',
+            fontName=font_name,
             fontSize=16,
             leading=26,
             textColor=colors.black
         )
         
-        # कापावे रेषेसाठी स्टाईल
         cut_style = ParagraphStyle(
             'CleanCutStyle',
-            fontName='MarathiSans',
+            fontName=font_name,
             fontSize=10,
             leading=14,
             alignment=1, # Center
@@ -93,7 +81,7 @@ if uploaded_file is not None:
         for index, row in data_frame.iterrows():
             slip_elements = []
             
-            # १. पॅनेल बॅनर - उंची २५० करून पूर्ण स्पेस कव्हर केली आहे जेणेकरून तो रेषेपर्यंत फिट बसेल
+            # १. पॅनेल बॅनर - पूर्ण कडांपर्यंत ३५५ रुंदी आणि २३० उंचीसह अचूक फिट
             if banner_bytes:
                 try:
                     banner_img = Image(io.BytesIO(banner_bytes), width=355, height=230)
@@ -112,7 +100,7 @@ if uploaded_file is not None:
             voter_no = row.get('अनुक्रमांक', row.get('मतदार नं.', index + 1))
             raw_name = row.get('मतदाराचे पूर्ण नांव', row.get('नाव', row.get('मतदाराचे पूर्ण नाव', '')))
             
-            # वेलांटीच्या सर्व चुका १००% क्लीन करणे
+            # वेलांटीच्या चुका दुरुस्त करणे
             clean_name = str(raw_name).replace('सचनि', 'सचिन').replace('दलिीप', 'दिलीप').replace('अभजिीत', 'अभिजीत').replace('गोवदि', 'गोविंद').replace('करिण', 'किरण').replace('अश्वनिी', 'अश्विनी').replace('संदपि', 'संदीप').replace('योगतिा', 'योगिता').replace('प्रयिांका', 'प्रियांका').replace('आदत्यि', 'आदित्य').replace('मुजाहदि', 'मुजाहिद').replace('मनषिा', 'मनिषा').replace('वलिलास', 'विलास').replace('सारकिा', 'सारिका').replace('सुरेद्र', 'सुरेंद्र').replace('मंजरीि', 'मंजिरी').replace('भाटयिा', 'भाटिया').replace('गंगासगि', 'गंगासिंग').replace('सुरेद्रसगि', 'सुरेंद्रसिंग').replace('मांजशिी', 'मांजिरी').replace('गुरवदिर', 'गुरविंदर').replace('जतिंद्र', 'जितेन्द्र').replace('जतिद्र', 'जितेंद्र').replace('शशकिल', 'शशिकला').replace('शविचरण', 'शिवचरण').replace('माधूरी', 'माधुरी').replace('रनिा', 'रिना').replace('मयििांचद', 'मियाचंद').replace('अमति', 'अमित').replace('सलिराज', 'शिलेराज').replace('वदिद्या', 'विद्या').replace('रामसगि', 'रामसिंग').replace('कसिनसगि', 'किसनसिंग').replace('राजूसगि', 'राजूसिंग').replace('प्रवणि', 'प्रवीण').replace('शदि', 'शिंदे').replace('शर्मलिर्ता', 'शर्मिला').replace('वरािज', 'विराज').replace('शरीिष', 'शिरीष').replace('चरािग', 'चिराग').replace('रूचतिा', 'रुचिता').replace('नरिजन', 'निरंजन').replace('दपिक', 'दीपक')
             
             raw_gender = row.get('लिंग', '')
@@ -122,7 +110,7 @@ if uploaded_file is not None:
             house_no = row.get('घर क्रमांक', '-')
             part_no = row.get('भाग / सिरीयल क्र.', row.get('यादी भाग क्र.', ''))
             
-            # ३. मतदाराची माहिती - पॅराग्राफ लेआउट आणि गुगल फॉन्टमुळे 'लिंग', 'क्रमांक' अगदी १००% शुद्ध मराठीत येईल
+            # ३. मतदाराची माहिती - पॅराग्राफ लेआउटमुळे 'लिंग' आणि 'क्रमांक' चे जोडाक्षर शंभर टक्के शुद्ध दिसेल
             info_html = f"""
             <b>मतदार नं. :</b> {voter_no} <br/><br/>
             <b>नाव :</b> {clean_name} <br/><br/>
@@ -133,7 +121,7 @@ if uploaded_file is not None:
             """
             slip_elements.append(Paragraph(info_html, marathi_style))
             
-            # आऊटलाईन बॉक्स डिझाईन (A5 पानावरील उभ्या स्लिपसाठी परफेक्ट हायड्रेशन)
+            # आऊटलाईन बॉक्स डिझाईन
             voter_table = Table([[slip_elements]], colWidths=[360], rowHeights=[540])
             voter_table.setStyle(TableStyle([
                 ('BOX', (0,0), (-1,-1), 2, colors.black),
