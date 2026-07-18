@@ -7,12 +7,11 @@ from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import io
-import urllib.request
 import re
 
 st.set_page_config(page_title="Balaji Cyber Point - Final Voter System", layout="wide")
 
-st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Low Size & Clean Layout)")
+st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Clean Fonts Fixed)")
 
 # १. पॅनेल बॅनर आणि सेटिंग्ज
 st.sidebar.header("⚙️ पॅनेल कॉन्फिगरेशन")
@@ -22,6 +21,9 @@ polling_station_input = st.sidebar.text_input("२. मतदान केंद
 # २. एक्सेल फाईल अपलोड
 st.subheader("📊 मतदार एक्सेल फाईल अपलोड करा")
 uploaded_file = st.file_uploader("तुमची एक्सेल फाईल (.xlsx) इथे अपलोड करा", type=["xlsx"])
+
+# सिस्टीमचे फॉन्ट्स मॅप करणे जेणेकरून वेलांटी किंवा जोडाक्षरे अजिबात फुटणार नाहीत
+pdfmetrics.registerFont(TTFont('Mangal', 'mangal.ttf', 'UTF-8'))
 
 def clean_gender_and_text(text):
     text = str(text).strip()
@@ -35,19 +37,8 @@ if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
     st.success("✅ एक्सेल फाईल यशस्वीरित्या लोड झाली!")
     
-    # ३. सुटसुटीत आणि अचूक पीडीएफ जनरेशन लॉजिक (Low Size PDF)
+    # ३. सुटसुटीत आणि अचूक पीडीएफ जनरेशन लॉजिक
     def generate_perfect_slips(data_frame, banner_bytes, polling_station):
-        # ॲप क्रॅश टाळण्यासाठी फॉन्ट डाऊनलोडिंग बटन दाबल्यानंतर आतमध्ये ठेवले आहे
-        font_name = 'Helvetica'
-        try:
-            font_url = "https://github.com/googlefonts/noto-fonts/raw/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf"
-            font_data = urllib.request.urlopen(font_url).read()
-            font_io = io.BytesIO(font_data)
-            pdfmetrics.registerFont(TTFont('MarathiSans', font_io))
-            font_name = 'MarathiSans'
-        except:
-            pass
-
         buffer = io.BytesIO()
         
         # A5 Portrait सेटअप - कडांपर्यंत परफेक्ट फिटिंगसाठी मार्जिन्स १८ ठेवल्या आहेत
@@ -61,17 +52,18 @@ if uploaded_file is not None:
         )
         story = []
         
+        # सिस्टीम मधील 'Mangal' फॉन्ट वापरल्यामुळे जोडाक्षरे एकदम शुद्ध येतील
         marathi_style = ParagraphStyle(
             'CleanMarathiStyle',
-            fontName=font_name,
-            fontSize=16,
-            leading=26,
+            fontName='Mangal',
+            fontSize=15,
+            leading=25,
             textColor=colors.black
         )
         
         cut_style = ParagraphStyle(
             'CleanCutStyle',
-            fontName=font_name,
+            fontName='Mangal',
             fontSize=10,
             leading=14,
             alignment=1, # Center
@@ -110,13 +102,13 @@ if uploaded_file is not None:
             house_no = row.get('घर क्रमांक', '-')
             part_no = row.get('भाग / सिरीयल क्र.', row.get('यादी भाग क्र.', ''))
             
-            # ३. मतदाराची माहिती - पॅराग्राफ लेआउटमुळे 'लिंग' आणि 'क्रमांक' चे जोडाक्षर शंभर टक्के शुद्ध दिसेल
+            # ३. मतदाराची माहिती - 'Mangal' सिस्टीम फॉन्टमुळे जोडाक्षरे एकदम कडक आणि शुद्ध मराठीत दिसतील
             info_html = f"""
             <b>मतदार नं. :</b> {voter_no} <br/><br/>
             <b>नाव :</b> {clean_name} <br/><br/>
             <b>लिंग / वय :</b> {clean_gender} / {age} <br/><br/>
             <b>ओळखपत्र क्रमांक :</b> {epic_no} <br/><br/>
-            <b>घर क्रमांक :</b> {house_no} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>भाग क्रमांक :</b> {part_no} <br/><br/>
+            <b>घर क्रमांक :</b> {house_no} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>भाग क्रमांक :</b> {part_no} <br/><br/>
             <b>मतदान केंद्र :</b> {polling_station}
             """
             slip_elements.append(Paragraph(info_html, marathi_style))
@@ -147,7 +139,7 @@ if uploaded_file is not None:
     if st.button("🚀 नवीन A5 Portrait मतदार स्लिप्स पीडीएफ जनरेट करा"):
         banner_data = uploaded_banner.read() if uploaded_banner else None
         
-        with st.spinner("कमी साईझ आणि १००% शुद्ध मराठी फॉन्टसह स्लिप्स पीडीएफ तयार होत आहे..."):
+        with st.spinner("सिस्टममधील Mangal फॉन्ट कॉन्फिगर करून शुद्ध मराठीत स्लिप्स पीडीएफ तयार होत आहे..."):
             pdf_out = generate_perfect_slips(df, banner_data, polling_station_input)
             
             st.success("🎉 सर्व ५९० स्लिप्स अत्यंत हलक्या फाईल साईझमध्ये आणि शुद्ध मराठीत तयार झाल्या आहेत!")
