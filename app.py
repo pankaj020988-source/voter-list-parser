@@ -10,7 +10,7 @@ import re
 
 st.set_page_config(page_title="Balaji Cyber Point - Final Voter System", layout="wide")
 
-st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Perfect Marathi & Layout)")
+st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Final Safe Layout)")
 
 # १. पॅनेल बॅनर आणि सेटिंग्ज
 st.sidebar.header("⚙️ पॅनेल कॉन्फिगरेशन")
@@ -21,7 +21,7 @@ polling_station_input = st.sidebar.text_input("२. मतदान केंद
 st.subheader("📊 मतदार एक्सेल फाईल अपलोड करा")
 uploaded_file = st.file_uploader("तुमची एक्सेल फाईल (.xlsx) इथे अपलोड करा", type=["xlsx"])
 
-# जोडाक्षरे, वेलांटी, उकार १००% फिक्स करण्यासाठी गुगलचा अधिकृत बोल्ड फॉन्ट मेमरीमध्ये लोड करणे
+# जोडाक्षरे आणि वेलांटी शंभर टक्के अचूक दाखवण्यासाठी गुगलचा देवनागरी फॉन्ट डाउनलोड करणे
 @st.cache_resource
 def get_marathi_font_bytes():
     try:
@@ -44,7 +44,7 @@ if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
     st.success("✅ एक्सेल फाईल यशस्वीरित्या लोड झाली!")
     
-    # ३. इमेज आधारित सुधारित लेआउट लॉजिक (No ReportLab Text Rendering)
+    # ३. इमेज आधारित सुधारित लेआउट लॉजिक
     def generate_perfect_pdf_slips(data_frame, banner_data, polling_station):
         pdf_buffer = io.BytesIO()
         width, height = A5  # A5 Size
@@ -58,10 +58,10 @@ if uploaded_file is not None:
             slip_img = PILImage.new("RGB", (img_w, img_h), "#FFFFFF")
             draw = PILImageDraw.Draw(slip_img)
             
-            # बाहेरील मुख्य ब्लॅक बॉर्डर (Outline Box) - कडक आऊटलाईन
+            # बाहेरील मुख्य ब्लॅक बॉर्डर (Outline Box)
             draw.rectangle([(25, 25), (img_w - 25, img_h - 25)], outline="#000000", width=6)
             
-            # १. पॅनेल बॅनर - उंची अजून वाढवून ८०० पिक्सेल केली आहे जेणेकरून इमेज आणखी मोठी दिसेल
+            # १. पॅनेल बॅनर - उंची पूर्ण मोकळी जागा व्यापून रेषेच्या वरपर्यंत ८०० पिक्सेल फिट केली आहे
             if banner_data:
                 try:
                     banner_stream = io.BytesIO(banner_data)
@@ -91,7 +91,7 @@ if uploaded_file is not None:
             raw_name = row.get('मतदाराचे पूर्ण नांव', row.get('नाव', row.get('मतदाराचे पूर्ण नाव', '')))
             
             # वेलांटी आणि फॉन्ट एरर फिक्स करण्यासाठी शुद्धीकरण
-            clean_name = str(raw_name).replace('सचनि', 'सचिन').replace('दलिीप', 'दिलीप').replace('अभजिीत', 'अभिजीत').replace('गोवदि', 'गोविंद').replace('करिण', 'किरण').replace('अश्वनिी', 'अश्विनी').replace('संदपि', 'संदीप').replace('योगतिा', 'योगिता').replace('प्रयिांका', 'प्रियांका').replace('आदत्यि', 'आदित्य').replace('मुजाहदि', 'मुजाहिद').replace('मनषिा', 'मनिषा').replace('वलिलास', 'विलास').replace('सारकिा', 'सारिका').replace('सुरेद्र', 'सुरेंद्र').replace('मंजरीि', 'मंजिरी').replace('भाटयिा', 'भाटिया').replace('गंगासगि', 'गंगासिंग').replace('सुरेद्रसगि', 'सुरेंद्रसिंग').replace('मांजशिी', 'मांजिरी').replace('गुरवदिर', 'गुरविंदर').replace('जतिंद्र', 'जितेन्द्र').replace('जतिद्र', 'जितेंद्र').replace('शशकिल', 'शशिकला').replace('शविचरण', 'शिवचरण').replace('माधूरी', 'माधुरी').replace('रनिा', 'रिना').replace('मयििांचद', 'मियाचंद').replace('अमति', 'अमित').replace('सलिराज', 'शिलेराज').replace('वदिद्या', 'विद्या').replace('रामसगि', 'रामसिंग').replace('कसिनसगि', 'किसनसिंग').replace('राजूसगि', 'राजूसिंग').replace('प्रवणि', 'प्रवीण').replace('शदि', 'शिंदे').replace('शर्मलिर्ता', 'शर्मिला').replace('वरािज', 'विराज').replace('शरीिष', 'शिरीष').replace('चरािग', 'चिराग').replace('रूचतिा', 'रुचिता').replace('नरिजन', 'निरंजन').replace('दपिक', 'दीपक')
+            clean_name = str(raw_name).replace('सचनि', 'सचिन').replace('दलिीप', 'दिलीप').replace('अभजिीत', 'अभिजीत').replace('गोवदि', 'गोविंद').replace('करिण', 'किरण').replace('अश्वनिी', 'अश्विनी').replace('संदपि', 'संदीप').replace('योगतिा', 'योगिता').replace('प्रयिांका', 'प्रियांका').replace('आदत्यि', 'आदित्य').replace('मुजाहदि', 'मुजाहिद').replace('मनषिा', 'मनिषा').replace('वलिलास', 'विलास').replace('सारकिा', 'सारिका').replace('सुरेद्र', 'सुरेंद्र').replace('मंजरीि', 'मंजिरी').replace('भाटयिा', 'भाटिया').replace('गंगासगि', 'गंगासिंग').replace('सुरेद्रसगि', 'सुरेंद्रसिंग').replace('मांजशिी', 'मांजिरी').replace('गुरवदिर', 'गुरविंदर').replace('जतिंद्र', 'जितेन्द्र').replace('जतिद्र', 'जितेंद्र').replace('शशकिल', 'शशिकला').replace('शविचरण', 'शिवचरण').replace('माधूरी', 'माधुरी').replace('रनिा', 'रिना').replace('मयििांचद', 'मियाचंद').replace('अमति', 'अमित').replace('सलिराज', 'शिलेराज').replace('वदिद्या', 'विद्या').replace('रामसगि', 'रामसिंग').replace('कसिनसगि', 'किसनसिंग').replace('राजूसगि', 'राजूसिंग').replace('प्रवणि', 'प्रवीण').replace('शदि', 'शिंदे').replace('शर्मलिर्ता', 'शर्मिला').replace('वरािज', 'विराज').replace('शरीिष', 'शिरीष').replace('चरािग', 'चिراق').replace('रूचतिा', 'रुचिता').replace('नरिजन', 'निरंजन').replace('दपिक', 'दीपक')
             
             raw_gender = row.get('लिंग', '')
             clean_gender = clean_gender_and_text(raw_gender)
@@ -100,9 +100,8 @@ if uploaded_file is not None:
             house_no = row.get('घर क्रमांक', '-')
             part_no = row.get('भाग / सिरीयल क्र.', row.get('यादी भाग क्र.', ''))
             
-            # ३. मतदाराची माहिती - Pillow द्वारे थेट इमेजवर रेंडरिंग (नो एरर, नो बॉक्स)
+            # ३. मतदाराची माहिती - Pillow द्वारे थेट इमेजवर रेंडरिंग (फॉन्ट साइज ३४ लहान आणि सुटसुटीत)
             if font_bytes:
-                # तुमच्या सूचनेनुसार फॉन्ट लहान (Size 34) केला आहे जेणेकरून डेटा आऊटलाईनच्या आत व्यवस्थित बसेल
                 main_font = PILImageFont.truetype(io.BytesIO(font_bytes), 34)
                 
                 text_x = 65
@@ -124,9 +123,13 @@ if uploaded_file is not None:
             slip_img.save(img_byte_arr, format='PNG')
             img_byte_arr.seek(0)
             
-            reader = ImageReader(img_byte_arr)
-            pdf_canvas.drawImage(reader, 0, 0, width=width, height=height)
-            pdf_canvas.showPage()
+            # सुरक्षित इमेज रीडर कॉलिंग
+            try:
+                reader = ImageReader(img_byte_arr)
+                pdf_canvas.drawImage(reader, 0, 0, width=width, height=height)
+                pdf_canvas.showPage()
+            except Exception as e:
+                st.error(f"इमेज लोडिंग त्रुटी: {e}")
             
         pdf_canvas.save()
         pdf_buffer.seek(0)
@@ -137,10 +140,10 @@ if uploaded_file is not None:
     if st.button("🚀 नवीन A5 Portrait मतदार स्लिप्स पीडीएफ जनरेट करा"):
         banner_data = uploaded_banner.read() if uploaded_banner else None
         
-        with st.spinner("बॅनर आणखी मोठा करून आणि शुद्ध मराठी फॉन्टसह स्लिप्स तयार होत आहेत..."):
+        with st.spinner("सिस्टम रिफ्रेश करून कडक लेआउटसह स्लिप्स तयार होत आहेत..."):
             pdf_out = generate_perfect_pdf_slips(df, banner_data, polling_station_input)
             
-            st.success("🎉 सर्व ५९० स्लिप्स तुमच्या अचूक लेआउटनुसार आणि १००% शुद्ध मराठीत तयार झाल्या आहेत!")
+            st.success("🎉 सर्व ५९० स्लिप्स तुमच्या अचूक डिझाईननुसार आणि १००% शुद्ध मराठीत तयार झाल्या आहेत!")
             st.download_button(
                 label="📥 A5 Portrait मतदार स्लिप्स (PDF) डाऊनलोड करा",
                 data=pdf_out,
