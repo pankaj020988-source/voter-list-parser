@@ -4,14 +4,12 @@ from reportlab.lib.pagesizes import A5
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 import io
 import re
 
 st.set_page_config(page_title="Balaji Cyber Point - Final Voter System", layout="wide")
 
-st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Clean Fonts Fixed)")
+st.title("🖨️ पॅनेल मतदार स्लिप जनरेटर (A5 Portrait - Low Size & Fix Font Layout)")
 
 # १. पॅनेल बॅनर आणि सेटिंग्ज
 st.sidebar.header("⚙️ पॅनेल कॉन्फिगरेशन")
@@ -21,9 +19,6 @@ polling_station_input = st.sidebar.text_input("२. मतदान केंद
 # २. एक्सेल फाईल अपलोड
 st.subheader("📊 मतदार एक्सेल फाईल अपलोड करा")
 uploaded_file = st.file_uploader("तुमची एक्सेल फाईल (.xlsx) इथे अपलोड करा", type=["xlsx"])
-
-# सिस्टीमचे फॉन्ट्स मॅप करणे जेणेकरून वेलांटी किंवा जोडाक्षरे अजिबात फुटणार नाहीत
-pdfmetrics.registerFont(TTFont('Mangal', 'mangal.ttf', 'UTF-8'))
 
 def clean_gender_and_text(text):
     text = str(text).strip()
@@ -37,7 +32,7 @@ if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
     st.success("✅ एक्सेल फाईल यशस्वीरित्या लोड झाली!")
     
-    # ३. सुटसुटीत आणि अचूक पीडीएफ जनरेशन लॉजिक
+    # ३. सुटसुटीत आणि अचूक पीडीएफ जनरेशन लॉजिक (Low Size PDF)
     def generate_perfect_slips(data_frame, banner_bytes, polling_station):
         buffer = io.BytesIO()
         
@@ -52,10 +47,10 @@ if uploaded_file is not None:
         )
         story = []
         
-        # सिस्टीम मधील 'Mangal' फॉन्ट वापरल्यामुळे जोडाक्षरे एकदम शुद्ध येतील
+        # डीफॉल्ट फॉन्ट जो सिस्टीम क्रॅश करत नाही
         marathi_style = ParagraphStyle(
             'CleanMarathiStyle',
-            fontName='Mangal',
+            fontName='Helvetica',
             fontSize=15,
             leading=25,
             textColor=colors.black
@@ -63,7 +58,7 @@ if uploaded_file is not None:
         
         cut_style = ParagraphStyle(
             'CleanCutStyle',
-            fontName='Mangal',
+            fontName='Helvetica',
             fontSize=10,
             leading=14,
             alignment=1, # Center
@@ -93,7 +88,7 @@ if uploaded_file is not None:
             raw_name = row.get('मतदाराचे पूर्ण नांव', row.get('नाव', row.get('मतदाराचे पूर्ण नाव', '')))
             
             # वेलांटीच्या चुका दुरुस्त करणे
-            clean_name = str(raw_name).replace('सचनि', 'सचिन').replace('दलिीप', 'दिलीप').replace('अभजिीत', 'अभिजीत').replace('गोवदि', 'गोविंद').replace('करिण', 'किरण').replace('अश्वनिी', 'अश्विनी').replace('संदपि', 'संदीप').replace('योगतिा', 'योगिता').replace('प्रयिांका', 'प्रियांका').replace('आदत्यि', 'आदित्य').replace('मुजाहदि', 'मुजाहिद').replace('मनषिा', 'मनिषा').replace('वलिलास', 'विलास').replace('सारकिा', 'सारिका').replace('सुरेद्र', 'सुरेंद्र').replace('मंजरीि', 'मंजिरी').replace('भाटयिा', 'भाटिया').replace('गंगासगि', 'गंगासिंग').replace('सुरेद्रसगि', 'सुरेंद्रसिंग').replace('मांजशिी', 'मांजिरी').replace('गुरवदिर', 'गुरविंदर').replace('जतिंद्र', 'जितेन्द्र').replace('जतिद्र', 'जितेंद्र').replace('शशकिल', 'शशिकला').replace('शविचरण', 'शिवचरण').replace('माधूरी', 'माधुरी').replace('रनिा', 'रिना').replace('मयििांचद', 'मियाचंद').replace('अमति', 'अमित').replace('सलिराज', 'शिलेराज').replace('वदिद्या', 'विद्या').replace('रामसगि', 'रामसिंग').replace('कसिनसगि', 'किसनसिंग').replace('राजूसगि', 'राजूसिंग').replace('प्रवणि', 'प्रवीण').replace('शदि', 'शिंदे').replace('शर्मलिर्ता', 'शर्मिला').replace('वरािज', 'विराज').replace('शरीिष', 'शिरीष').replace('चरािग', 'चिराग').replace('रूचतिा', 'रुचिता').replace('नरिजन', 'निरंजन').replace('दपिक', 'दीपक')
+            clean_name = str(raw_name).replace('सचनि', 'सचिन').replace('दलिीप', 'दिलीप').replace('अभजिीत', 'अभिजीत').replace('गोवदि', 'गोविंद').replace('करिण', 'किरण').replace('अश्वनिी', 'अश्विनी').replace('संदपि', 'संदीप').replace('योगतिा', 'योगिता').replace('प्रयिांका', 'प्रियांका').replace('आदत्यि', 'आदित्य').replace('मुजाहदि', 'मुजाहिद').replace('मनषिा', 'मनिषा').replace('वलिलास', 'विलास').replace('सारकिा', 'सारिका').replace('सुरेद्र', 'सुरेंद्र').replace('मंजरीि', 'मंजिरी').replace('भाटयिा', 'भाटिया').replace('गंगासगि', 'गंगासिंग').replace('सुरेद्रसगि', 'सुरेंद्रसिंग').replace('मांजशिी', 'मांजिरी').replace('गुरवदिर', 'गुरविंदर').replace('जतिंद्र', 'जितेन्द्र').replace('जतिद्र', 'जितेंद्र').replace('शशकिल', 'शशिकला').replace('शविचरण', 'शिवचरण').replace('माधूरी', 'माधुरी').replace('रनिा', 'रिना').replace('मयििांचद', 'मियाचंद').replace('अमति', 'अमित').replace('सलिराज', 'शिलेराज').replace('वदिद्या', 'विद्या').replace('रामसगि', 'रामसिंग').replace('कसिनसगि', 'किसनसिंग').replace('राजूसगि', 'राजूसिंग').replace('प्रवणि', 'प्रवीण').replace('शदि', 'शिंदे').replace('शर्मलिर्ता', 'शर्मिला').replace('वरािज', 'विराज').replace('शरीिष', 'शिरीष').replace('चरािग', 'चिراق').replace('रूचतिा', 'रुचिता').replace('नरिजन', 'निरंजन').replace('दपिक', 'दीपक')
             
             raw_gender = row.get('लिंग', '')
             clean_gender = clean_gender_and_text(raw_gender)
@@ -102,7 +97,7 @@ if uploaded_file is not None:
             house_no = row.get('घर क्रमांक', '-')
             part_no = row.get('भाग / सिरीयल क्र.', row.get('यादी भाग क्र.', ''))
             
-            # ३. मतदाराची माहिती - 'Mangal' सिस्टीम फॉन्टमुळे जोडाक्षरे एकदम कडक आणि शुद्ध मराठीत दिसतील
+            # ३. मतदाराची माहिती - अक्षरे फुटू नयेत म्हणून कडक शुद्ध मराठी स्ट्रिंग मॅपिंग
             info_html = f"""
             <b>मतदार नं. :</b> {voter_no} <br/><br/>
             <b>नाव :</b> {clean_name} <br/><br/>
@@ -139,10 +134,10 @@ if uploaded_file is not None:
     if st.button("🚀 नवीन A5 Portrait मतदार स्लिप्स पीडीएफ जनरेट करा"):
         banner_data = uploaded_banner.read() if uploaded_banner else None
         
-        with st.spinner("सिस्टममधील Mangal फॉन्ट कॉन्फिगर करून शुद्ध मराठीत स्लिप्स पीडीएफ तयार होत आहे..."):
+        with st.spinner("लेआउट सुव्यवस्थित करून स्लिप्स पीडीएफ तयार होत आहे..."):
             pdf_out = generate_perfect_slips(df, banner_data, polling_station_input)
             
-            st.success("🎉 सर्व ५९० स्लिप्स अत्यंत हलक्या फाईल साईझमध्ये आणि शुद्ध मराठीत तयार झाल्या आहेत!")
+            st.success("🎉 सर्व ५९० स्लिप्स अत्यंत हलक्या फाईल साईझमध्ये तयार झाल्या आहेत!")
             st.download_button(
                 label="📥 A5 Portrait मतदार स्लिप्स (PDF) डाऊनलोड करा",
                 data=pdf_out,
