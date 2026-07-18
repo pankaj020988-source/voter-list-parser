@@ -33,7 +33,7 @@ if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
     st.success("✅ एक्सेल फाईल यशस्वीरित्या लोड झाली!")
     
-    # ३. बदललेला HTML लेआउट (ओळखपत्र क्र. अचूक फिक्स)
+    # ३. बदललेला HTML लेआउट (ओळखपत्र क्र. आणि मतदार नंबर अचूक फिक्स)
     def generate_html_layout(data_frame, banner_b64, polling_station):
         html_content = """
         <html>
@@ -134,9 +134,7 @@ if uploaded_file is not None:
             clean_gender = clean_gender_and_text(raw_gender)
             age = str(row.get('वय', ''))
             
-            # एरर फिक्स: एक्सेल मधील 'मतदार ओळखपत्र क्र' कॉलम कॉलम अचूकपणे मॅप केला
             epic_no = str(row.get('मतदार ओळखपत्र क्र', row.get('मतदार ओळखपत्र क्र.', row.get('मतदार ओळखपत्र क्र. (Voter ID)', ''))))
-            
             house_no = str(row.get('घर क्रमांक', '-'))
             part_no = str(row.get('भाग / सिरीयल क्र.', row.get('भाग / सिरीयल क्र', row.get('यादी भाग क्र.', ''))))
             
@@ -182,14 +180,15 @@ if uploaded_file is not None:
     st.markdown("---")
     st.subheader("🚀 पायरी ३: मतदार स्लिप्स फाईल डाऊनलोड करा")
     
+    # ऑटो-प्रिंट कमांड सुरक्षितपणे ॲड केली
     printable_html = final_html.replace("<body>", '<body onload="window.print()">')
     
+    # मूळ आणि सुरक्षित स्ट्रीमलिट डाऊनलोड पॅटर्न
     st.download_button(
         label="📥 ५९० मतदार स्लिप्स (PDF/HTML) थेट डाऊनलोड करा",
         data=printable_html,
-        file_name="Balaji_Cyber_Point_Voter_Slips_Final.html",
+        file_name="Balaji_Cyber_Point_Voter_Slips_LargeBanner.html",
         mime="text/html",
     )
-
-    with st.expander("👀 पहिल्या काही स्लिप्सचा नवीन नमुना पाहण्यासाठी इथे क्लिक करा"):
-        st.components.v1.html(final_html, height=650, scrolling=True)
+    
+    st.info("💡 **टीप:** डाऊनलोड केलेल्या फाईलवर क्लिक करताच प्रिंटर सुरू होईल, तिथे **'Save as PDF'** निवडून सेव्ह करा!")
