@@ -6,7 +6,9 @@ import re
 # Professional Corporate Page Setup
 st.set_page_config(page_title="Balaji Cyber Point | Voter Slip System Pro", layout="wide")
 
-st.markdown("<h2 style='text-align: center; color: #1E3A8A; font-family: sans-serif; margin-bottom: 25px;'>VOTER SLIP SYSTEM PRO</h2>", unsafe_allow_html=True)
+# Balaji Cyber Point Professional Branding Title
+st.markdown("<h2 style='text-align: center; color: #1E3A8A; font-family: sans-serif; margin-bottom: 5px; font-weight: bold; letter-spacing: 1px;'>BALAJI CYBER POINT</h2>", unsafe_allow_html=True)
+st.markdown("<h5 style='text-align: center; color: #4B5563; font-family: sans-serif; margin-bottom: 30px; letter-spacing: 2px;'>VOTER SLIP SYSTEM PRO</h5>", unsafe_allow_html=True)
 
 # 1. Professional Control Panel (Sidebar)
 st.sidebar.markdown("<h3 style='color: #1E3A8A; font-family: sans-serif;'>CONFIGURATION</h3>", unsafe_allow_html=True)
@@ -297,7 +299,7 @@ if uploaded_file is not None:
     st.download_button(
         label=f"📥 DOWNLOAD ALL {total_rows} VOTER SLIPS (PDF/HTML)",
         data=printable_html,
-        file_name=f"Voter_Slips_Master_Compilation.html",
+        file_name=f"Balaji_Cyber_Point_Master_Slips.html",
         mime="text/html",
         use_container_width=True
     )
